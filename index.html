@@ -3,17 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LDEAN DEV - Keegz Klicker & Casino</title>
+<title>LDEAN DEV - Keegz Klicker</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="page-container">
-
-    <!-- Navigation Tabs -->
-    <nav class="tabs">
-        <button data-tab="clicker" class="tab-btn active">Clicker</button>
-        <button data-tab="casino" class="tab-btn">Casino</button>
-    </nav>
 
     <!-- Clicker Game -->
     <div id="clicker" class="page active">
@@ -21,47 +15,66 @@
         <p>Collect all photos and climb the leaderboard!</p>
         <div class="content game-content">
             <div class="clicker-main">
+
+                <!-- Top Stats -->
                 <div class="top-stats">
-                    <div class="stat-box big"><p>Score</p><h2 id="clickerScore">0</h2></div>
-                    <div class="stat-box"><p>Multiplier Buff</p><h2 id="clickerMultiplier">x1</h2></div>
-                    <div class="stat-box"><p>Per Click</p><h2 id="clickerPerClick">1</h2></div>
-                    <div class="stat-box"><p>Passive/sec</p><h2 id="clickerPassive">0</h2></div>
+                    <div class="stat-box big">
+                        <p>Score</p>
+                        <h2 id="clickerScore">0</h2>
+                    </div>
+                    <div class="stat-box">
+                        <p>Multiplier Buff</p>
+                        <h2 id="clickerMultiplier">x1</h2>
+                    </div>
+                    <div class="stat-box">
+                        <p>Per Click</p>
+                        <h2 id="clickerPerClick">1</h2>
+                    </div>
+                    <div class="stat-box">
+                        <p>Passive/sec</p>
+                        <h2 id="clickerPassive">0</h2>
+                    </div>
                 </div>
 
+                <!-- Clicker Image -->
                 <div class="clicker-image">
                     <img id="clickerImg" src="" alt="Click me!">
                     <div class="click-feedback" id="clickFeedback">+1</div>
+                    <div class="multiplier-indicator" id="multiplierIndicator"></div>
                 </div>
 
+                <!-- Photos -->
                 <div class="photo-grid">
                     <h3>📸 Photo Collection (<span id="photoCount">0</span>/20)</h3>
                     <div id="photoUpgrades" class="photos-container"></div>
                 </div>
 
+                <!-- Power Upgrades -->
                 <div class="power-upgrades">
                     <h3>⚡ Power Upgrades</h3>
                     <div id="powerUpgrades" class="power-container"></div>
                 </div>
 
+                <!-- Leaderboard -->
                 <div class="leaderboard-section">
                     <h3>🏆 Leaderboard</h3>
                     <ul id="leaderboard" class="leaderboard-list"></ul>
                     <button id="submitScoreBtn">Submit Score</button>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Casino Page -->
+    <!-- Casino Tab -->
     <div id="casino" class="page">
-        <h1>🎰 Keegz Casino</h1>
-        <p>Risk your clicks and maybe win big!</p>
+        <h1>🃏 Keegz Blackjack</h1>
+        <p>Bet your clicks and try to beat the dealer!</p>
         <div class="content game-content">
-            <div class="casino-main">
-                <button class="casino-btn" id="slotsBtn">Play Slots</button>
-                <button class="casino-btn" id="blackjackBtn">Play Blackjack</button>
-                <button class="casino-btn" id="rouletteBtn">Play Roulette</button>
-                <div id="casinoResult" class="casino-result"></div>
+            <div id="blackjackGame" class="casino-game">
+                <p>Bet: <span id="blackjackBet">100</span> clicks</p>
+                <button id="blackjackDealBtn">Deal</button>
+                <div id="blackjackResult"></div>
             </div>
         </div>
     </div>
