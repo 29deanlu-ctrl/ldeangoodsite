@@ -7,16 +7,9 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-<!-- TAB BUTTONS -->
-<div class="tab-buttons">
-  <button id="clickerTabBtn">Clicker</button>
-  <button id="casinoTabBtn">Blackjack Casino</button>
-</div>
-
 <div class="page-container">
 
-    <!-- CLICKER TAB -->
+    <!-- Clicker Tab -->
     <div id="clicker" class="page active">
         <h1>Keegz Klicker</h1>
         <p>Collect all photos and climb the leaderboard!</p>
@@ -58,21 +51,27 @@
                 </div>
 
                 <div class="leaderboard-section">
-                    <h3>🏆 Leaderboard (Top 3)</h3>
+                    <h3>🏆 Leaderboard</h3>
                     <ul id="leaderboard" class="leaderboard-list"></ul>
                     <button id="submitScoreBtn">Submit Score</button>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <!-- BLACKJACK TAB -->
+    <!-- Casino Tab -->
     <div id="casino" class="page">
-        <h1>Blackjack Casino</h1>
-        <p>Risk your clicks to win big! (1 in 13 chance to hit jackpot)</p>
-        <div class="casino-game">
-            <div id="casinoMsg"></div>
-            <button id="playBlackjackBtn">Play Blackjack (10 clicks)</button>
+        <h1>🃏 Blackjack Casino</h1>
+        <p>Bet some of your clicks and try your luck!</p>
+        <div class="content game-content">
+            <div class="casino-main">
+                <p>Current Clicks: <span id="casinoScore">0</span></p>
+                <label for="casinoBet">Bet Amount:</label>
+                <input type="number" id="casinoBet" min="1" value="100">
+                <button id="casinoPlayBtn">Play Blackjack</button>
+                <div id="casinoResult"></div>
+            </div>
         </div>
     </div>
 
@@ -82,7 +81,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- GAME SCRIPT -->
+<!-- Game Script -->
 <script src="script.js"></script>
 </body>
 </html>
