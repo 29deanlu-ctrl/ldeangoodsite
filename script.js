@@ -11,10 +11,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ==================== USERNAME HANDLING ====================
+// ==================== USERNAME ====================
 function getUsername() {
     let username = localStorage.getItem("clickerUsername");
-
     if (!username) {
         username = prompt("Choose a username for the leaderboard:");
         if (!username || username.trim() === "") {
@@ -22,7 +21,6 @@ function getUsername() {
         }
         localStorage.setItem("clickerUsername", username);
     }
-
     return username;
 }
 
@@ -31,12 +29,11 @@ class AdvancedClickerGame {
     constructor() {
         this.username = getUsername();
 
-        const savedData = JSON.parse(localStorage.getItem('clickerSave')) || {};
+        const savedData = JSON.parse(localStorage.getItem("clickerSave")) || {};
         this.score = savedData.score || 0;
         this.perClick = savedData.perClick || 1;
         this.passivePerSecond = savedData.passivePerSecond || 0;
         this.photoCount = savedData.photoCount || 1;
-        this.maxPhotos = 20;
         this.multiplierValue = 2;
 
         const allPhotos = [
@@ -63,7 +60,7 @@ class AdvancedClickerGame {
         ];
 
         this.photos = allPhotos;
-        document.getElementById('clickerImg').src =
+        document.getElementById("clickerImg").src =
             savedData.currentPhoto || this.photos[0];
 
         this.photoUpgrades = this.photos.map((photo, index) => ({
@@ -76,9 +73,9 @@ class AdvancedClickerGame {
         }));
 
         this.powerUpgrades = [
-            { id: 'clickPower', name: '+10 Per Click', cost: 500, purchased: savedData.powerUpgrades?.clickPower || 0, costMultiplier: 1.15 },
-            { id: 'autoClicker', name: 'Auto-Clicker Bot', cost: 2000, purchased: savedData.powerUpgrades?.autoClicker || 0, costMultiplier: 1.2 },
-            { id: 'boostMultiplier', name: 'Multiplier Boost', cost: 5000, purchased: savedData.powerUpgrades?.boostMultiplier || 0, costMultiplier: 1.25 }
+            { id: "clickPower", name: "+10 Per Click", cost: 500, purchased: savedData.powerUpgrades?.clickPower || 0, costMultiplier: 1.15 },
+            { id: "autoClicker", name: "Auto-Clicker Bot", cost: 2000, purchased: savedData.powerUpgrades?.autoClicker || 0, costMultiplier: 1.2 },
+            { id: "boostMultiplier", name: "Multiplier Boost", cost: 5000, purchased: savedData.powerUpgrades?.boostMultiplier || 0, costMultiplier: 1.25 }
         ];
 
         this.setupEventListeners();
@@ -88,25 +85,24 @@ class AdvancedClickerGame {
         this.startGameLoop();
         this.fetchLeaderboard();
 
-        // 🔥 AUTO LEADERBOARD UPDATE
         setInterval(() => this.submitScore(), 10000);
         window.addEventListener("beforeunload", () => this.submitScore());
     }
 
     saveGame() {
-        localStorage.setItem('clickerSave', JSON.stringify({
+        localStorage.setItem("clickerSave", JSON.stringify({
             score: this.score,
             perClick: this.perClick,
             passivePerSecond: this.passivePerSecond,
             photoCount: this.photoCount,
-            currentPhoto: document.getElementById('clickerImg').src,
+            currentPhoto: document.getElementById("clickerImg").src,
             photoUpgrades: this.photoUpgrades.map(u => ({ purchased: u.purchased })),
             powerUpgrades: Object.fromEntries(this.powerUpgrades.map(u => [u.id, u.purchased]))
         }));
     }
 
     setupEventListeners() {
-        document.getElementById('clickerImg').addEventListener('click', () => {
+        document.getElementById("clickerImg").addEventListener("click", () => {
             this.score += this.perClick;
             this.updateUI();
             this.saveGame();
@@ -123,52 +119,99 @@ class AdvancedClickerGame {
         }, 1000);
     }
 
+    unlockPhoto(index) {
+        const upg = this.photoUpgrades[index];
+        if (this.score >= upg.cost && !upg.purchased) {
+            this.score -= upg.cost;
+            upg.purchased = true;
+            this.photoCount++;
+            this.passivePerSecond += upg.passiveValue;
+            document.getElementById("clickerImg").src = upg.photo;
+            this.updateUI();
+            this.saveGame();
+        }
+    }
+
     initializePhotoUpgrades() {
-        const container = document.getElementById('photoUpgrades');
-        container.innerHTML = '';
+        const container = document.getElementById("photoUpgrades");
+        container.innerHTML = "";
+
         this.photoUpgrades.forEach(u => {
-            const btn = document.createElement('button');
-            btn.className = 'photo-btn';
+            const btn = document.createElement("button");
+            btn.className = "photo-btn";
             btn.disabled = u.purchased;
-            btn.innerHTML = `<img src="${u.photo}"><div class="photo-cost">${u.cost}</div>`;
+            if (u.purchased) btn.classList.add("purchased");
+
+            btn.innerHTML = `
+                <div class="photo-inner">
+                    <img src="${u.photo}" alt="${u.name}">
+                </div>
+                <div class="photo-cost">${u.cost}</div>
+            `;
+
             btn.onclick = () => this.unlockPhoto(u.index);
             container.appendChild(btn);
         });
-        document.getElementById('photoCount').textContent = this.photoCount;
+
+        document.getElementById("photoCount").textContent = this.photoCount;
     }
 
     initializePowerUpgrades() {
-        const container = document.getElementById('powerUpgrades');
-        container.innerHTML = '';
+        const container = document.getElementById("powerUpgrades");
+        container.innerHTML = "";
+
         this.powerUpgrades.forEach(u => {
             const cost = Math.ceil(u.cost * Math.pow(u.costMultiplier, u.purchased));
-            const btn = document.createElement('button');
-            btn.className = 'power-btn';
-            btn.innerHTML = `${u.name} (Owned: ${u.purchased}) <span>${cost}</span>`;
+            const btn = document.createElement("button");
+            btn.className = "power-btn";
             btn.disabled = this.score < cost;
+
+            btn.innerHTML = `
+                <div class="power-info">
+                    <span class="power-name">${u.name}</span>
+                    <span class="power-count">Owned: ${u.purchased}</span>
+                </div>
+                <div class="power-cost">${cost}</div>
+            `;
+
             btn.onclick = () => this.buyPowerUpgrade(u.id);
             container.appendChild(btn);
         });
     }
 
+    buyPowerUpgrade(id) {
+        const upg = this.powerUpgrades.find(u => u.id === id);
+        const cost = Math.ceil(upg.cost * Math.pow(upg.costMultiplier, upg.purchased));
+        if (this.score >= cost) {
+            this.score -= cost;
+            upg.purchased++;
+            if (id === "clickPower") this.perClick += 10;
+            if (id === "autoClicker") this.passivePerSecond += 5;
+            if (id === "boostMultiplier") this.multiplierValue += 0.5;
+            this.updateUI();
+            this.saveGame();
+        }
+    }
+
     updateUI() {
-        document.getElementById('clickerScore').textContent = this.score;
-        document.getElementById('clickerPerClick').textContent = this.perClick;
-        document.getElementById('clickerPassive').textContent = this.passivePerSecond;
+        document.getElementById("clickerScore").textContent = this.score;
+        document.getElementById("clickerPerClick").textContent = this.perClick;
+        document.getElementById("clickerPassive").textContent = this.passivePerSecond;
+        document.getElementById("clickerMultiplier").textContent = `x${this.multiplierValue}`;
         this.initializePowerUpgrades();
     }
 
     async fetchLeaderboard() {
-        const lb = document.getElementById('leaderboard');
-        lb.innerHTML = '';
-        const snap = await db.collection('leaderboard')
-            .orderBy('score', 'desc')
+        const lb = document.getElementById("leaderboard");
+        lb.innerHTML = "";
+        const snap = await db.collection("leaderboard")
+            .orderBy("score", "desc")
             .limit(5)
             .get();
 
         snap.forEach(doc => {
             const d = doc.data();
-            const li = document.createElement('li');
+            const li = document.createElement("li");
             li.textContent = `${d.name}: ${d.score}`;
             lb.appendChild(li);
         });
@@ -176,7 +219,7 @@ class AdvancedClickerGame {
 
     async submitScore() {
         try {
-            await db.collection('leaderboard')
+            await db.collection("leaderboard")
                 .doc(this.username)
                 .set({
                     name: this.username,
@@ -195,25 +238,24 @@ class AdvancedClickerGame {
 class BlackjackCasino {
     constructor(game) {
         this.game = game;
-        document.getElementById('casinoPlayBtn')
-            .addEventListener('click', () => this.play());
+        document.getElementById("casinoPlayBtn")
+            .addEventListener("click", () => this.play());
     }
 
     play() {
-        const bet = parseInt(document.getElementById('casinoBet').value);
+        const bet = parseInt(document.getElementById("casinoBet").value);
         if (bet > this.game.score) return;
 
         this.game.score -= bet;
         if (Math.random() < 1 / 13) {
             this.game.score += bet * 10;
         }
-
         this.game.updateUI();
     }
 }
 
 // ==================== INIT ====================
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener("DOMContentLoaded", () => {
     const game = new AdvancedClickerGame();
     new BlackjackCasino(game);
 });
