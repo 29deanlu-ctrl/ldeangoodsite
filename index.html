@@ -7,8 +7,16 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- TAB BUTTONS -->
+<div class="tab-buttons">
+  <button id="clickerTabBtn">Clicker</button>
+  <button id="casinoTabBtn">Blackjack Casino</button>
+</div>
+
 <div class="page-container">
-    <!-- Clicker Game Tab -->
+
+    <!-- CLICKER TAB -->
     <div id="clicker" class="page active">
         <h1>Keegz Klicker</h1>
         <p>Collect all photos and climb the leaderboard!</p>
@@ -50,7 +58,7 @@
                 </div>
 
                 <div class="leaderboard-section">
-                    <h3>🏆 Leaderboard</h3>
+                    <h3>🏆 Leaderboard (Top 3)</h3>
                     <ul id="leaderboard" class="leaderboard-list"></ul>
                     <button id="submitScoreBtn">Submit Score</button>
                 </div>
@@ -58,33 +66,23 @@
         </div>
     </div>
 
-    <!-- Blackjack Casino Tab -->
+    <!-- BLACKJACK TAB -->
     <div id="casino" class="page">
-        <h1>🎰 Blackjack Casino</h1>
-        <p>Risk your clicks! Try to beat the dealer.</p>
-        <div class="content game-content">
-            <div class="blackjack-main">
-                <p>Your Click Balance: <span id="casinoBalance">0</span></p>
-                <p>Current Bet: <span id="blackjackBet">0</span></p>
-                <input type="number" id="betAmount" placeholder="Enter bet" min="1">
-                <button id="placeBetBtn">Place Bet</button>
-                <div id="blackjackCards">
-                    <div>Your Hand: <span id="playerHand"></span></div>
-                    <div>Dealer's Hand: <span id="dealerHand"></span></div>
-                </div>
-                <button id="hitBtn">Hit</button>
-                <button id="standBtn">Stand</button>
-                <p id="blackjackMessage"></p>
-            </div>
+        <h1>Blackjack Casino</h1>
+        <p>Risk your clicks to win big! (1 in 13 chance to hit jackpot)</p>
+        <div class="casino-game">
+            <div id="casinoMsg"></div>
+            <button id="playBlackjackBtn">Play Blackjack (10 clicks)</button>
         </div>
     </div>
+
 </div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- Game Script -->
+<!-- GAME SCRIPT -->
 <script src="script.js"></script>
 </body>
 </html>
