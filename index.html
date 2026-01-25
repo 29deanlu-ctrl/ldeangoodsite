@@ -8,8 +8,7 @@
 </head>
 <body>
 <div class="page-container">
-
-    <!-- Clicker Tab -->
+    <!-- Clicker Game Tab -->
     <div id="clicker" class="page active">
         <h1>Keegz Klicker</h1>
         <p>Collect all photos and climb the leaderboard!</p>
@@ -55,26 +54,30 @@
                     <ul id="leaderboard" class="leaderboard-list"></ul>
                     <button id="submitScoreBtn">Submit Score</button>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <!-- Casino Tab -->
+    <!-- Blackjack Casino Tab -->
     <div id="casino" class="page">
-        <h1>🃏 Blackjack Casino</h1>
-        <p>Bet some of your clicks and try your luck!</p>
+        <h1>🎰 Blackjack Casino</h1>
+        <p>Risk your clicks! Try to beat the dealer.</p>
         <div class="content game-content">
-            <div class="casino-main">
-                <p>Current Clicks: <span id="casinoScore">0</span></p>
-                <label for="casinoBet">Bet Amount:</label>
-                <input type="number" id="casinoBet" min="1" value="100">
-                <button id="casinoPlayBtn">Play Blackjack</button>
-                <div id="casinoResult"></div>
+            <div class="blackjack-main">
+                <p>Your Click Balance: <span id="casinoBalance">0</span></p>
+                <p>Current Bet: <span id="blackjackBet">0</span></p>
+                <input type="number" id="betAmount" placeholder="Enter bet" min="1">
+                <button id="placeBetBtn">Place Bet</button>
+                <div id="blackjackCards">
+                    <div>Your Hand: <span id="playerHand"></span></div>
+                    <div>Dealer's Hand: <span id="dealerHand"></span></div>
+                </div>
+                <button id="hitBtn">Hit</button>
+                <button id="standBtn">Stand</button>
+                <p id="blackjackMessage"></p>
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- Firebase SDK -->
