@@ -13,195 +13,254 @@ const db = firebase.firestore();
 
 // ==================== USERNAME ====================
 function getUsername() {
-  let username = localStorage.getItem("clickerUsername");
-  if (!username) {
-    username = prompt("Choose a username:") || "Anonymous";
-    localStorage.setItem("clickerUsername", username);
-  }
-  return username;
+    let username = localStorage.getItem("clickerUsername");
+    if (!username) {
+        username = prompt("Choose a username for the leaderboard:");
+        if (!username || username.trim() === "") username = "Anonymous";
+        localStorage.setItem("clickerUsername", username);
+    }
+    return username;
 }
 
 // ==================== CLICKER GAME ====================
 class AdvancedClickerGame {
-  constructor() {
-    this.username = getUsername();
-    const saved = JSON.parse(localStorage.getItem("clickerSave")) || {};
+    constructor() {
+        this.username = getUsername();
 
-    this.score = saved.score || 0;
-    this.perClick = saved.perClick || 1;
-    this.passivePerSecond = 0;
-    this.multiplierValue = 2;
+        const saved = JSON.parse(localStorage.getItem("clickerSave")) || {};
+        this.score = saved.score || 0;
+        this.perClick = saved.perClick || 1;
+        this.passivePerSecond = saved.passivePerSecond || 0;
+        this.photoCount = saved.photoCount || 1;
+        this.multiplierValue = 2;
 
-    this.photos = [...document.querySelectorAll(".photo-btn")].length
-      ? []
-      : [
-          'images/018879bf-19f7-488c-9b8e-b187de3e160d (1).png',
-          'images/1fa2f337-ba2b-402e-973a-4cddd7761054.png',
-          'images/051dde8f-8d8b-474e-9188-282b5adbf160.png',
-          'images/IMG_8714.jpeg'
+        // ===== PHOTOS =====
+        const normalPhotos = Array.from({ length: 20 }, (_, i) =>
+            `images/photo_${i + 1}.png`
+        );
+
+        this.photos = [...normalPhotos, "images/final.jpeg"];
+
+        document.getElementById("clickerImg").src =
+            saved.currentPhoto || this.photos[0];
+
+        this.photoUpgrades = this.photos.map((photo, index) => ({
+            index,
+            photo,
+            cost: Math.ceil(Math.pow(2.1, index) * 100),
+            purchased: saved.photoUpgrades?.[index]?.purchased || index === 0,
+            passiveValue: index,
+            name: index === this.photos.length - 1 ? "Final Photo 👑" : `Photo #${index + 1}`
+        }));
+
+        this.powerUpgrades = [
+            { id: "clickPower", name: "+10 Per Click", cost: 500, purchased: saved.powerUpgrades?.clickPower || 0, costMultiplier: 1.15 },
+            { id: "autoClicker", name: "Auto-Clicker Bot", cost: 2000, purchased: saved.powerUpgrades?.autoClicker || 0, costMultiplier: 1.2 }
         ];
 
-    this.photoUpgrades = this.photos.map((photo, index) => ({
-      index,
-      photo,
-      cost: Math.ceil(Math.pow(2.2, index) * 100),
-      purchased: saved.photoUpgrades?.[index]?.purchased || index === 0,
-      passiveValue: Math.ceil(index * 0.3)
-    }));
+        this.setupEventListeners();
+        this.initializePhotoUpgrades();
+        this.initializePowerUpgrades();
+        this.updateUI();
+        this.startGameLoop();
+        this.fetchLeaderboard();
 
-    // 🔧 FIX: recompute photoCount + passive income
-    this.photoCount = 0;
-    this.photoUpgrades.forEach(p => {
-      if (p.purchased) {
-        this.photoCount++;
-        this.passivePerSecond += p.passiveValue;
-      }
-    });
+        setInterval(() => this.submitScore(), 10000);
+    }
 
-    document.getElementById("clickerImg").src =
-      saved.currentPhoto || this.photos[0];
+    saveGame() {
+        localStorage.setItem("clickerSave", JSON.stringify({
+            score: this.score,
+            perClick: this.perClick,
+            passivePerSecond: this.passivePerSecond,
+            photoCount: this.photoCount,
+            currentPhoto: document.getElementById("clickerImg").src,
+            photoUpgrades: this.photoUpgrades.map(u => ({ purchased: u.purchased })),
+            powerUpgrades: Object.fromEntries(this.powerUpgrades.map(u => [u.id, u.purchased]))
+        }));
+    }
 
-    this.setupClicker();
-    this.renderPhotos();
-    this.updateUI();
-    this.startLoop();
-    this.fetchLeaderboard();
+    setupEventListeners() {
+        document.getElementById("clickerImg").addEventListener("click", () => {
+            this.score += this.perClick * this.multiplierValue;
+            this.updateUI();
+            this.saveGame();
+        });
+    }
 
-    setInterval(() => this.submitScore(), 10000);
-  }
+    startGameLoop() {
+        setInterval(() => {
+            this.score += this.passivePerSecond;
+            this.updateUI();
+            this.saveGame();
+        }, 1000);
+    }
 
-  setupClicker() {
-    document.getElementById("clickerImg").onclick = () => {
-      this.score += this.perClick * this.multiplierValue;
-      this.updateUI();
-      this.save();
-    };
-  }
+    unlockPhoto(index) {
+        const upg = this.photoUpgrades[index];
+        if (this.score >= upg.cost && !upg.purchased) {
+            this.score -= upg.cost;
+            upg.purchased = true;
+            this.photoCount++;
+            this.passivePerSecond += upg.passiveValue;
+            document.getElementById("clickerImg").src = upg.photo;
 
-  startLoop() {
-    setInterval(() => {
-      this.score += this.passivePerSecond;
-      this.updateUI();
-      this.save();
-    }, 1000);
-  }
+            this.initializePhotoUpgrades(); // FIXED
+            this.updateUI();
+            this.saveGame();
+        }
+    }
 
-  unlockPhoto(index) {
-    const p = this.photoUpgrades[index];
-    if (p.purchased || this.score < p.cost) return;
+    initializePhotoUpgrades() {
+        const container = document.getElementById("photoUpgrades");
+        container.innerHTML = "";
 
-    this.score -= p.cost;
-    p.purchased = true;
-    this.photoCount++;
-    this.passivePerSecond += p.passiveValue;
+        this.photoUpgrades.forEach(u => {
+            const btn = document.createElement("button");
+            btn.className = "photo-btn";
+            btn.disabled = u.purchased;
+            if (u.purchased) btn.classList.add("purchased");
 
-    document.getElementById("clickerImg").src = p.photo;
+            btn.innerHTML = `
+                <div class="photo-inner">
+                    <img src="${u.photo}">
+                </div>
+                <div class="photo-cost">${u.cost}</div>
+            `;
 
-    this.renderPhotos();
-    this.updateUI();
-    this.save();
-  }
+            btn.onclick = () => this.unlockPhoto(u.index);
+            container.appendChild(btn);
+        });
 
-  renderPhotos() {
-    const container = document.getElementById("photoUpgrades");
-    container.innerHTML = "";
+        document.getElementById("photoCount").textContent = this.photoCount;
+    }
 
-    this.photoUpgrades.forEach(p => {
-      const btn = document.createElement("button");
-      btn.className = "photo-btn";
-      if (p.purchased) btn.classList.add("purchased");
-      btn.disabled = p.purchased;
+    initializePowerUpgrades() {
+        const container = document.getElementById("powerUpgrades");
+        container.innerHTML = "";
 
-      btn.innerHTML = `
-        <div class="photo-inner">
-          <img src="${p.photo}">
-        </div>
-        <div class="photo-cost">${p.cost}</div>
-      `;
+        this.powerUpgrades.forEach(u => {
+            const cost = Math.ceil(u.cost * Math.pow(u.costMultiplier, u.purchased));
+            const btn = document.createElement("button");
+            btn.className = "power-btn";
+            btn.disabled = this.score < cost;
 
-      btn.onclick = () => this.unlockPhoto(p.index);
-      container.appendChild(btn);
-    });
+            btn.innerHTML = `
+                <div class="power-info">
+                    <span class="power-name">${u.name}</span>
+                    <span class="power-count">Owned: ${u.purchased}</span>
+                </div>
+                <div class="power-cost">${cost}</div>
+            `;
 
-    document.getElementById("photoCount").textContent = this.photoCount;
-  }
+            btn.onclick = () => {
+                if (this.score >= cost) {
+                    this.score -= cost;
+                    u.purchased++;
+                    if (u.id === "clickPower") this.perClick += 10;
+                    if (u.id === "autoClicker") this.passivePerSecond += 5;
+                    this.updateUI();
+                    this.saveGame();
+                }
+            };
 
-  updateUI() {
-    document.getElementById("clickerScore").textContent = this.score;
-    document.getElementById("clickerPerClick").textContent = this.perClick;
-    document.getElementById("clickerPassive").textContent = this.passivePerSecond;
-    document.getElementById("clickerMultiplier").textContent = `x${this.multiplierValue}`;
-    document.getElementById("casinoScore").textContent = this.score;
-  }
+            container.appendChild(btn);
+        });
+    }
 
-  save() {
-    localStorage.setItem("clickerSave", JSON.stringify({
-      score: this.score,
-      perClick: this.perClick,
-      currentPhoto: document.getElementById("clickerImg").src,
-      photoUpgrades: this.photoUpgrades.map(p => ({ purchased: p.purchased }))
-    }));
-  }
+    updateUI() {
+        document.getElementById("clickerScore").textContent = Math.floor(this.score);
+        document.getElementById("clickerPerClick").textContent = this.perClick;
+        document.getElementById("clickerPassive").textContent = this.passivePerSecond;
+        document.getElementById("clickerMultiplier").textContent = `x${this.multiplierValue}`;
+        this.initializePowerUpgrades();
+    }
 
-  async fetchLeaderboard() {
-    const lb = document.getElementById("leaderboard");
-    lb.innerHTML = "";
-    const snap = await db.collection("leaderboard").orderBy("score", "desc").limit(3).get();
-    let i = 1;
-    snap.forEach(doc => {
-      const li = document.createElement("li");
-      li.textContent = `${i++}. ${doc.data().name}: ${doc.data().score}`;
-      lb.appendChild(li);
-    });
-  }
+    async fetchLeaderboard() {
+        const lb = document.getElementById("leaderboard");
+        lb.innerHTML = "";
 
-  async submitScore() {
-    await db.collection("leaderboard").doc(this.username).set({
-      name: this.username,
-      score: this.score
-    }, { merge: true });
-  }
+        const snap = await db.collection("leaderboard")
+            .orderBy("score", "desc")
+            .limit(3)
+            .get();
+
+        let rank = 1;
+        snap.forEach(doc => {
+            const d = doc.data();
+            const li = document.createElement("li");
+            li.textContent = `${rank}. ${d.name}: ${Math.floor(d.score)}`;
+            lb.appendChild(li);
+            rank++;
+        });
+    }
+
+    async submitScore() {
+        await db.collection("leaderboard").doc(this.username).set({
+            name: this.username,
+            score: Math.floor(this.score),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    }
 }
 
-// ==================== REAL BLACKJACK ====================
+// ==================== BLACKJACK (REAL GAME) ====================
 class BlackjackCasino {
-  constructor(game) {
-    this.game = game;
-    this.result = document.getElementById("casinoResult");
-    document.getElementById("casinoPlayBtn").onclick = () => this.play();
-  }
+    constructor(game) {
+        this.game = game;
+        this.reset();
+        document.getElementById("casinoPlayBtn").onclick = () => this.hit();
+    }
 
-  draw() {
-    return Math.min(10, Math.floor(Math.random() * 13) + 1);
-  }
+    reset() {
+        this.player = this.draw() + this.draw();
+        this.dealer = this.draw();
+        document.getElementById("casinoResult").textContent =
+            `You: ${this.player} | Dealer: ${this.dealer}`;
+    }
 
-  play() {
-    const bet = +document.getElementById("casinoBet").value;
-    if (bet <= 0 || bet > this.game.score) return;
+    draw() {
+        return Math.min(10, Math.floor(Math.random() * 13) + 1);
+    }
 
-    let player = this.draw() + this.draw();
-    let dealer = this.draw() + this.draw();
+    hit() {
+        const bet = parseInt(document.getElementById("casinoBet").value);
+        if (bet > this.game.score || bet <= 0) return;
 
-    while (player < 17) player += this.draw();
-    while (dealer < 17) dealer += this.draw();
+        this.player += this.draw();
 
-    this.game.score -= bet;
+        if (this.player > 21) {
+            this.game.score -= bet;
+            document.getElementById("casinoResult").textContent = "💥 Bust!";
+            this.reset();
+        } else if (this.player >= 21 || this.player > this.dealer) {
+            this.game.score += bet;
+            document.getElementById("casinoResult").textContent = "🎉 You win!";
+            this.reset();
+        } else {
+            document.getElementById("casinoResult").textContent =
+                `You: ${this.player} | Dealer: ${this.dealer}`;
+        }
 
-    let msg;
-    if (player > 21) msg = "Bust! You lose.";
-    else if (dealer > 21 || player > dealer) {
-      this.game.score += bet * 2;
-      msg = "You win!";
-    } else msg = "Dealer wins.";
-
-    this.result.textContent = `You: ${player} | Dealer: ${dealer} — ${msg}`;
-    this.game.updateUI();
-    this.game.save();
-  }
+        this.game.updateUI();
+        this.game.saveGame();
+    }
 }
+
+// ==================== TAB SWITCHING ====================
+function showPage(id) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+}
+
+// Press 1 = Clicker, 2 = Casino
+document.addEventListener("keydown", e => {
+    if (e.key === "1") showPage("clicker");
+    if (e.key === "2") showPage("casino");
+});
 
 // ==================== INIT ====================
 window.addEventListener("DOMContentLoaded", () => {
-  const game = new AdvancedClickerGame();
-  new BlackjackCasino(game);
+    const game = new AdvancedClickerGame();
+    new BlackjackCasino(game);
 });
