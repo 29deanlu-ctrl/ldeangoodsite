@@ -3,11 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LDEAN DEV - Keegz Klicker</title>
+<title>LDEAN DEV - Keegz Klicker & Casino</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+/* Simple styles for casino tab */
+.casino-content { display: flex; flex-direction: column; gap: 20px; }
+.casino-game { background: #16213e; padding: 20px; border-radius: 12px; border: 1px solid rgba(0,212,255,0.1); }
+.casino-game h2 { color: #00d4ff; margin-bottom: 10px; }
+.page-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+.page-nav button { padding: 10px 20px; background: #1a1a2e; color: #fff; border: 1px solid #00d4ff; border-radius: 8px; cursor: pointer; }
+.page-nav button:hover { background: #16213e; }
+</style>
 </head>
 <body>
+
+<!-- Page Navigation -->
+<div class="page-nav">
+  <button onclick="showPage('clicker')">Clicker</button>
+  <button onclick="showPage('casino')">Casino</button>
+</div>
+
+<!-- Page Container -->
 <div class="page-container">
+
+    <!-- Clicker Page -->
     <div id="clicker" class="page active">
         <h1>Keegz Klicker</h1>
         <p>Collect all photos and climb the leaderboard!</p>
@@ -32,26 +51,22 @@
                     </div>
                 </div>
 
-                <!-- Clickable main photo -->
                 <div class="clicker-image">
                     <img id="clickerImg" src="" alt="Click me!">
                     <div class="click-feedback" id="clickFeedback">+1</div>
                     <div class="multiplier-indicator" id="multiplierIndicator"></div>
                 </div>
 
-                <!-- Photo collection -->
                 <div class="photo-grid">
                     <h3>📸 Photo Collection (<span id="photoCount">0</span>/20)</h3>
                     <div id="photoUpgrades" class="photos-container"></div>
                 </div>
 
-                <!-- Power upgrades -->
                 <div class="power-upgrades">
                     <h3>⚡ Power Upgrades</h3>
                     <div id="powerUpgrades" class="power-container"></div>
                 </div>
 
-                <!-- Leaderboard -->
                 <div class="leaderboard-section">
                     <h3>🏆 Leaderboard</h3>
                     <ul id="leaderboard" class="leaderboard-list"></ul>
@@ -60,13 +75,48 @@
             </div>
         </div>
     </div>
+
+    <!-- Casino Page -->
+    <div id="casino" class="page">
+        <h1>🎰 Keegz Casino</h1>
+        <p>Risk your clicks in Slots, Blackjack, or Roulette!</p>
+        <div class="casino-content">
+
+            <!-- Slots -->
+            <div class="casino-game" id="slotsGame">
+                <h2>🎰 Slots</h2>
+                <p>Cost: <span id="slotsCost">500</span> clicks per spin</p>
+                <button id="spinSlotsBtn">Spin Slots</button>
+                <div id="slotsResult"></div>
+            </div>
+
+            <!-- Blackjack -->
+            <div class="casino-game" id="blackjackGame">
+                <h2>🃏 Blackjack</h2>
+                <p>Bet: <input type="number" id="blackjackBet" value="1000" min="100" step="100"> clicks</p>
+                <button id="playBlackjackBtn">Play Blackjack</button>
+                <div id="blackjackResult"></div>
+            </div>
+
+            <!-- Roulette -->
+            <div class="casino-game" id="rouletteGame">
+                <h2>🎡 Roulette</h2>
+                <p>Bet on a number (0–9): <input type="number" id="rouletteBetNumber" min="0" max="9" value="0"></p>
+                <p>Cost per spin: <span id="rouletteCost">200</span> clicks</p>
+                <button id="playRouletteBtn">Spin Roulette</button>
+                <div id="rouletteResult"></div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- Game Script -->
+<!-- Link to your separate JS file -->
 <script src="script.js"></script>
 </body>
 </html>
