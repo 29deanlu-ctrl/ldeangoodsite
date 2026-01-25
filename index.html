@@ -13,6 +13,7 @@
         <p>Collect all photos and climb the leaderboard!</p>
         <div class="content game-content">
             <div class="clicker-main">
+                <!-- Top Stats -->
                 <div class="top-stats">
                     <div class="stat-box big">
                         <p>Score</p>
@@ -32,23 +33,26 @@
                     </div>
                 </div>
 
+                <!-- Clicker Image -->
                 <div class="clicker-image">
-                    <!-- FIXED: First photo shows by default -->
-                    <img id="clickerImg" src="images/photo1.png" alt="Click me!">
+                    <img id="clickerImg" src="" alt="Click me!">
                     <div class="click-feedback" id="clickFeedback">+1</div>
                     <div class="multiplier-indicator" id="multiplierIndicator"></div>
                 </div>
 
+                <!-- Photo Collection -->
                 <div class="photo-grid">
                     <h3>📸 Photo Collection (<span id="photoCount">0</span>/20)</h3>
                     <div id="photoUpgrades" class="photos-container"></div>
                 </div>
 
+                <!-- Power Upgrades -->
                 <div class="power-upgrades">
                     <h3>⚡ Power Upgrades</h3>
                     <div id="powerUpgrades" class="power-container"></div>
                 </div>
 
+                <!-- Leaderboard -->
                 <div class="leaderboard-section">
                     <h3>🏆 Leaderboard</h3>
                     <ul id="leaderboard" class="leaderboard-list"></ul>
@@ -66,5 +70,6 @@
 
 <!-- Game Script -->
 <script src="script.js"></script>
+
 </body>
 </html>
