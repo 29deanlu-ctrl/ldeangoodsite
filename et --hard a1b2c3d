@@ -1,0 +1,32 @@
+[33me32abf1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m idk
+[33m7e78e73[m Fixing bugx
+[33m2171e75[m Fix photo purchase bug and add playable blackjack
+[33m6759f4f[m restoration2
+[33md118d83[m restoration
+[33m02c5af9[m Restore clicker game with photos, power-ups, leaderboard, multiplier, and playable blackjack
+[33ma23e93c[m Added playable Blackjack tab integrated with clicker game
+[33me55ccb1[m Added playable Blackjack tab integrated with clicker game
+[33m568ed3c[m Revert code to pre-multiplier update state
+[33m21ac578[m Separate HTML, CSS, and JS for Keegz Klicker; fully structured project
+[33mcd5924f[m Limit leaderboard to top 3 with numbered ranks and remove submit button
+[33m77a8e80[m Fix photo upgrade zoom by restoring photo-inner structure
+[33mfc14958[m Add persistent username and auto-updating leaderboard
+[33me48ace2[m Updated leaderboard to show top 3 and saved all game changes
+[33maf533d1[m Full integration: fixed photos, added blackjack tab, top 3 leaderboard, tab switching
+[33m5e5a5c3[m Added fully playable Blackjack casino tab and top 3 leaderboard
+[33me70bf75[m Updated leaderboard to show top 3 and saved all game changes
+[33m82af614[m Added playable Blackjack casino tab to clicker game
+[33m0f47c95[m Update clicker game, add Blackjack casino tab
+[33mbaf84fb[m Add casino tab with slots, blackjack, and roulette; update clicker game
+[33m34024a9[m Add casino tab with slots, blackjack, and roulette; separate JS from HTML
+[33mcb887e8[m Fix clickable image and photo collection display
+[33mf6ae97e[m Fix clicker images and photo collection display
+[33m877fd0b[m Fix clicker image display and photo upgrades
+[33mb80de2f[m Fix photo loading issue in clicker game
+[33m04f23de[m Fix clicker game: split JS, HTML, CSS and update functionality
+[33m02be2ed[m Leaderboard
+[33mb3564c4[m Update index.html
+[33m7d1ee7f[m Update index.html
+[33me271c8a[m Update index.html
+[33m5926400[m LDEAN site
+[33md7bd115[m Create ldeansite
