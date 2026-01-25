@@ -177,7 +177,7 @@ class AdvancedClickerGame {
     fetchLeaderboard=async()=>{
         try{
             const lb=document.getElementById('leaderboard'); lb.innerHTML='Loading...';
-            const snap=await db.collection('leaderboard').orderBy('score','desc').limit(10).get();
+            const snap = await db.collection('leaderboard').orderBy('score','desc').limit(3).get();
             lb.innerHTML='';
             snap.forEach(d=>{
                 const data=d.data();
