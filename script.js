@@ -202,21 +202,23 @@ class AdvancedClickerGame {
     }
 
     async fetchLeaderboard() {
-        const lb = document.getElementById("leaderboard");
-        lb.innerHTML = "";
-        const snap = await db.collection("leaderboard")
-            .orderBy("score", "desc")
-            .limit(5)
-            .get();
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = "";
 
-        snap.forEach(doc => {
-            const d = doc.data();
-            const li = document.createElement("li");
-            li.textContent = `${d.name}: ${d.score}`;
-            lb.appendChild(li);
-        });
-    }
+    const snap = await db.collection("leaderboard")
+        .orderBy("score", "desc")
+        .limit(3)
+        .get();
 
+    let rank = 1;
+    snap.forEach(doc => {
+        const d = doc.data();
+        const li = document.createElement("li");
+        li.textContent = `${rank}. ${d.name}: ${d.score}`;
+        lb.appendChild(li);
+        rank++;
+    });
+}
     async submitScore() {
         try {
             await db.collection("leaderboard")

@@ -465,3 +465,7 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     }
 }
+.leaderboard-list {
+    list-style: none;
+    padding-left: 0;
+}
