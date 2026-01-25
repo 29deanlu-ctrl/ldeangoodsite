@@ -37,6 +37,7 @@
                 <div class="clicker-image">
                     <img id="clickerImg" src="" alt="Click me!">
                     <div class="click-feedback" id="clickFeedback">+1</div>
+                    <div class="multiplier-indicator" id="multiplierIndicator"></div>
                 </div>
 
                 <div class="photo-grid">
@@ -67,19 +68,8 @@
                 <p>Current Clicks: <span id="casinoScore">0</span></p>
                 <label for="casinoBet">Bet Amount:</label>
                 <input type="number" id="casinoBet" min="1" value="100">
-                <button id="casinoPlayBtn">Start Round</button>
-
-                <div class="casino-game">
-                    <h3>Dealer's Hand:</h3>
-                    <div id="dealerHand"></div>
-                    <h3>Your Hand:</h3>
-                    <div id="playerHand"></div>
-                    <div id="casinoControls">
-                        <button id="hitBtn" disabled>Hit</button>
-                        <button id="standBtn" disabled>Stand</button>
-                    </div>
-                    <div id="casinoResult"></div>
-                </div>
+                <button id="casinoPlayBtn">Play Blackjack</button>
+                <div id="casinoResult"></div>
             </div>
         </div>
     </div>
