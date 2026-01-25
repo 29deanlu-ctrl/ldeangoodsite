@@ -57,17 +57,31 @@
         </div>
     </div>
 
-    <!-- Casino Tab -->
+    <!-- ✅ REAL BLACKJACK TAB -->
     <div id="casino" class="page">
-        <h1>🃏 Blackjack Casino</h1>
-        <p>Bet some of your clicks and try your luck!</p>
+        <h1>🃏 Blackjack</h1>
+        <p>Use your clicks as chips</p>
+
         <div class="content game-content">
             <div class="casino-main">
-                <p>Current Clicks: <span id="casinoScore">0</span></p>
-                <label for="casinoBet">Bet Amount:</label>
+
+                <p>Your Clicks: <span id="casinoScore">0</span></p>
+
                 <input type="number" id="casinoBet" min="1" value="100">
-                <button id="casinoPlayBtn">Play Blackjack</button>
-                <div id="casinoResult"></div>
+
+                <div>
+                    <button id="dealBtn">Deal</button>
+                    <button id="hitBtn" disabled>Hit</button>
+                    <button id="standBtn" disabled>Stand</button>
+                </div>
+
+                <div class="hands">
+                    <p><strong>Dealer:</strong> <span id="dealerHand"></span></p>
+                    <p><strong>You:</strong> <span id="playerHand"></span></p>
+                </div>
+
+                <h3 id="casinoResult"></h3>
+
             </div>
         </div>
     </div>
