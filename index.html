@@ -22,7 +22,7 @@
                     </div>
                     <div class="stat-box">
                         <p>Multiplier Buff</p>
-                        <h2 id="clickerMultiplier">x2</h2>
+                        <h2 id="clickerMultiplier">x1</h2>
                     </div>
                     <div class="stat-box">
                         <p>Per Click</p>
@@ -36,6 +36,7 @@
 
                 <div class="clicker-image">
                     <img id="clickerImg" src="" alt="Click me!">
+                    <div class="click-feedback" id="clickFeedback">+1</div>
                 </div>
 
                 <div class="photo-grid">
@@ -66,8 +67,19 @@
                 <p>Current Clicks: <span id="casinoScore">0</span></p>
                 <label for="casinoBet">Bet Amount:</label>
                 <input type="number" id="casinoBet" min="1" value="100">
-                <button id="casinoPlayBtn">Play Blackjack</button>
-                <div id="casinoResult"></div>
+                <button id="casinoPlayBtn">Start Round</button>
+
+                <div class="casino-game">
+                    <h3>Dealer's Hand:</h3>
+                    <div id="dealerHand"></div>
+                    <h3>Your Hand:</h3>
+                    <div id="playerHand"></div>
+                    <div id="casinoControls">
+                        <button id="hitBtn" disabled>Hit</button>
+                        <button id="standBtn" disabled>Stand</button>
+                    </div>
+                    <div id="casinoResult"></div>
+                </div>
             </div>
         </div>
     </div>
