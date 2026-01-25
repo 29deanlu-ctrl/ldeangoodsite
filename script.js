@@ -28,21 +28,21 @@ class AdvancedClickerGame {
         this.username = getUsername();
 
         const saved = JSON.parse(localStorage.getItem("clickerSave")) || {};
+        
+        // Reset broken saves once
+        if (!saved.photoUpgrades) localStorage.removeItem("clickerSave");
+
         this.score = saved.score || 0;
         this.perClick = saved.perClick || 1;
         this.passivePerSecond = saved.passivePerSecond || 0;
-        this.photoCount = saved.photoCount || 1;
+        this.photoCount = saved.photoCount ?? 1;
         this.multiplierValue = 2;
 
         // ===== PHOTOS =====
         const normalPhotos = Array.from({ length: 20 }, (_, i) =>
             `images/photo_${i + 1}.png`
         );
-
         this.photos = [...normalPhotos, "images/final.jpeg"];
-
-        document.getElementById("clickerImg").src =
-            saved.currentPhoto || this.photos[0];
 
         this.photoUpgrades = this.photos.map((photo, index) => ({
             index,
@@ -52,6 +52,10 @@ class AdvancedClickerGame {
             passiveValue: index,
             name: index === this.photos.length - 1 ? "Final Photo 👑" : `Photo #${index + 1}`
         }));
+
+        // Set the displayed image to the first purchased photo
+        const firstUnlocked = this.photoUpgrades.find(p => p.purchased);
+        document.getElementById("clickerImg").src = firstUnlocked.photo;
 
         this.powerUpgrades = [
             { id: "clickPower", name: "+10 Per Click", cost: 500, purchased: saved.powerUpgrades?.clickPower || 0, costMultiplier: 1.15 },
@@ -105,7 +109,7 @@ class AdvancedClickerGame {
             this.passivePerSecond += upg.passiveValue;
             document.getElementById("clickerImg").src = upg.photo;
 
-            this.initializePhotoUpgrades(); // FIXED
+            this.initializePhotoUpgrades(); // refresh buttons
             this.updateUI();
             this.saveGame();
         }
@@ -209,6 +213,7 @@ class BlackjackCasino {
     constructor(game) {
         this.game = game;
         this.reset();
+        this.updateCasinoUI();
         document.getElementById("casinoPlayBtn").onclick = () => this.hit();
     }
 
@@ -221,6 +226,10 @@ class BlackjackCasino {
 
     draw() {
         return Math.min(10, Math.floor(Math.random() * 13) + 1);
+    }
+
+    updateCasinoUI() {
+        document.getElementById("casinoScore").textContent = Math.floor(this.game.score);
     }
 
     hit() {
@@ -243,6 +252,7 @@ class BlackjackCasino {
         }
 
         this.game.updateUI();
+        this.updateCasinoUI();
         this.game.saveGame();
     }
 }
@@ -253,7 +263,6 @@ function showPage(id) {
     document.getElementById(id).classList.add("active");
 }
 
-// Press 1 = Clicker, 2 = Casino
 document.addEventListener("keydown", e => {
     if (e.key === "1") showPage("clicker");
     if (e.key === "2") showPage("casino");
