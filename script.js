@@ -16,7 +16,9 @@ function getUsername() {
     let username = localStorage.getItem("clickerUsername");
     if (!username) {
         username = prompt("Choose a username for the leaderboard:");
-        if (!username || username.trim() === "") username = "Anonymous";
+        if (!username || username.trim() === "") {
+            username = "Anonymous";
+        }
         localStorage.setItem("clickerUsername", username);
     }
     return username;
@@ -32,7 +34,7 @@ class AdvancedClickerGame {
         this.perClick = savedData.perClick || 1;
         this.passivePerSecond = savedData.passivePerSecond || 0;
         this.photoCount = savedData.photoCount || 1;
-        this.multiplierValue = 2;
+        this.multiplierValue = 2; // static multiplier
 
         const allPhotos = [
             'images/018879bf-19f7-488c-9b8e-b187de3e160d (1).png',
@@ -58,7 +60,8 @@ class AdvancedClickerGame {
         ];
 
         this.photos = allPhotos;
-        document.getElementById("clickerImg").src = savedData.currentPhoto || this.photos[0];
+        document.getElementById("clickerImg").src =
+            savedData.currentPhoto || this.photos[0];
 
         this.photoUpgrades = this.photos.map((photo, index) => ({
             index,
@@ -100,7 +103,7 @@ class AdvancedClickerGame {
 
     setupEventListeners() {
         document.getElementById("clickerImg").addEventListener("click", () => {
-            this.score += this.perClick * this.multiplierValue;
+            this.score += this.perClick; // back to simple per-click
             this.updateUI();
             this.saveGame();
         });
@@ -132,27 +135,45 @@ class AdvancedClickerGame {
     initializePhotoUpgrades() {
         const container = document.getElementById("photoUpgrades");
         container.innerHTML = "";
+
         this.photoUpgrades.forEach(u => {
             const btn = document.createElement("button");
             btn.className = "photo-btn";
             btn.disabled = u.purchased;
             if (u.purchased) btn.classList.add("purchased");
-            btn.innerHTML = `<div class="photo-inner"><img src="${u.photo}" alt="${u.name}"></div><div class="photo-cost">${u.cost}</div>`;
+
+            btn.innerHTML = `
+                <div class="photo-inner">
+                    <img src="${u.photo}" alt="${u.name}">
+                </div>
+                <div class="photo-cost">${u.cost}</div>
+            `;
+
             btn.onclick = () => this.unlockPhoto(u.index);
             container.appendChild(btn);
         });
+
         document.getElementById("photoCount").textContent = this.photoCount;
     }
 
     initializePowerUpgrades() {
         const container = document.getElementById("powerUpgrades");
         container.innerHTML = "";
+
         this.powerUpgrades.forEach(u => {
             const cost = Math.ceil(u.cost * Math.pow(u.costMultiplier, u.purchased));
             const btn = document.createElement("button");
             btn.className = "power-btn";
             btn.disabled = this.score < cost;
-            btn.innerHTML = `<span>${u.name} (Owned: ${u.purchased})</span> <span>${cost}</span>`;
+
+            btn.innerHTML = `
+                <div class="power-info">
+                    <span class="power-name">${u.name}</span>
+                    <span class="power-count">Owned: ${u.purchased}</span>
+                </div>
+                <div class="power-cost">${cost}</div>
+            `;
+
             btn.onclick = () => this.buyPowerUpgrade(u.id);
             container.appendChild(btn);
         });
@@ -183,7 +204,12 @@ class AdvancedClickerGame {
     async fetchLeaderboard() {
         const lb = document.getElementById("leaderboard");
         lb.innerHTML = "";
-        const snap = await db.collection("leaderboard").orderBy("score","desc").limit(3).get();
+
+        const snap = await db.collection("leaderboard")
+            .orderBy("score", "desc")
+            .limit(3)
+            .get();
+
         let rank = 1;
         snap.forEach(doc => {
             const d = doc.data();
@@ -196,11 +222,14 @@ class AdvancedClickerGame {
 
     async submitScore() {
         try {
-            await db.collection("leaderboard").doc(this.username).set({
-                name: this.username,
-                score: this.score,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
+            await db.collection("leaderboard")
+                .doc(this.username)
+                .set({
+                    name: this.username,
+                    score: this.score,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
             this.fetchLeaderboard();
         } catch (err) {
             console.error(err);
@@ -208,7 +237,28 @@ class AdvancedClickerGame {
     }
 }
 
+// ==================== CASINO ====================
+class BlackjackCasino {
+    constructor(game) {
+        this.game = game;
+        document.getElementById("casinoPlayBtn")
+            .addEventListener("click", () => this.play());
+    }
+
+    play() {
+        const bet = parseInt(document.getElementById("casinoBet").value);
+        if (bet > this.game.score) return;
+
+        this.game.score -= bet;
+        if (Math.random() < 1 / 13) {
+            this.game.score += bet * 10;
+        }
+        this.game.updateUI();
+    }
+}
+
 // ==================== INIT ====================
 window.addEventListener("DOMContentLoaded", () => {
-    new AdvancedClickerGame();
+    const game = new AdvancedClickerGame();
+    new BlackjackCasino(game);
 });
