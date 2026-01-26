@@ -9,16 +9,19 @@ body {
     background: #0f0f1e;
     color: #e0e0e0;
     min-height: 100vh;
-    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 20px;
 }
 
 .page-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    min-height: 100vh;
+    max-width: 1200px;
+    width: 100%;
+    padding: 20px;
 }
 
+/* Pages */
 .page {
     display: none;
 }
@@ -32,8 +35,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
-    width: 100%;
-    max-width: 800px;
+    margin-bottom: 25px;
 }
 
 .stat-box {
@@ -51,18 +53,24 @@ body {
 /* Clicker Image */
 .clicker-image {
     cursor: pointer;
+    display: flex;
+    justify-content: center;
     margin: 20px 0;
 }
 
 .clicker-image img {
     width: 280px;
     height: 280px;
-    object-fit: cover;
+    object-fit: contain; /* prevents zoom/crop */
     border-radius: 20px;
     border: 5px solid #00d4ff;
 }
 
 /* Photo Grid */
+.photo-grid {
+    margin-top: 20px;
+}
+
 .photos-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -81,14 +89,24 @@ body {
     aspect-ratio: 1;
 }
 
+.photo-btn img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain; /* prevents zoom/crop */
+}
+
 .photo-btn.purchased {
     border-color: #00ff88;
 }
 
 /* Power Upgrades */
+.power-upgrades {
+    margin-top: 30px;
+}
+
 .power-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
 }
 
@@ -103,6 +121,10 @@ body {
 }
 
 /* Leaderboard */
+.leaderboard-section {
+    margin-top: 30px;
+}
+
 .leaderboard-list {
     list-style: none;
     padding-left: 0;
