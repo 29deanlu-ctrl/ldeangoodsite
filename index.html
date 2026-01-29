@@ -1,59 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Zone - Fun Games Hub</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LDEAN DEV - Keegz Klicker</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Page Container -->
-    <div class="page-container">
-        <!-- Photo Clicker Game -->
-        <div id="clicker" class="page active">
-            <h1>Keegz Klicker</h1>
-            <p>Collect all photos and climb the leaderboard!</p>
-            <div class="content game-content">
-                <div class="clicker-main">
-                    <div class="top-stats">
-                        <div class="stat-box big">
-                            <p>Score</p>
-                            <h2 id="clickerScore">0</h2>
-                        </div>
-                        <div class="stat-box">
-                            <p>Multiplier</p>
-                            <h2 id="clickerMultiplier">x1</h2>
-                        </div>
-                        <div class="stat-box">
-                            <p>Per Click</p>
-                            <h2 id="clickerPerClick">1</h2>
-                        </div>
-                        <div class="stat-box">
-                            <p>Passive/sec</p>
-                            <h2 id="clickerPassive">0</h2>
-                        </div>
-                    </div>
-                    
-                    <div class="clicker-image">
-                        <img id="clickerImg" src="" alt="Click me!">
-                        <div class="click-feedback" id="clickFeedback">+1</div>
-                        <div class="multiplier-indicator" id="multiplierIndicator"></div>
-                    </div>
+<div class="page-container">
 
-                    <div class="photo-grid">
-                        <h3>📸 Photo Collection (<span id="photoCount">0</span>/20)</h3>
-                        <div id="photoUpgrades" class="photos-container"></div>
+    <!-- Clicker Tab -->
+    <div id="clicker" class="page active">
+        <h1>Keegz Klicker</h1>
+        <p>Collect all photos and climb the leaderboard!</p>
+        <div class="content game-content">
+            <div class="clicker-main">
+                <div class="top-stats">
+                    <div class="stat-box big">
+                        <p>Score</p>
+                        <h2 id="clickerScore">0</h2>
                     </div>
-
-                    <div class="power-upgrades">
-                        <h3>⚡ Power Upgrades</h3>
-                        <div id="powerUpgrades" class="power-container"></div>
+                    <div class="stat-box">
+                        <p>Multiplier Buff</p>
+                        <h2 id="clickerMultiplier">x2</h2>
+                    </div>
+                    <div class="stat-box">
+                        <p>Per Click</p>
+                        <h2 id="clickerPerClick">1</h2>
+                    </div>
+                    <div class="stat-box">
+                        <p>Passive/sec</p>
+                        <h2 id="clickerPassive">0</h2>
                     </div>
                 </div>
+
+                <div class="clicker-image">
+                    <img id="clickerImg" src="" alt="Click me!">
+                </div>
+
+                <div class="photo-grid">
+                    <h3>📸 Photo Collection (<span id="photoCount">0</span>/20)</h3>
+                    <div id="photoUpgrades" class="photos-container"></div>
+                </div>
+
+                <div class="power-upgrades">
+                    <h3>⚡ Power Upgrades</h3>
+                    <div id="powerUpgrades" class="power-container"></div>
+                </div>
+
+                <div class="leaderboard-section">
+                    <h3>🏆 Leaderboard</h3>
+                    <ul id="leaderboard" class="leaderboard-list"></ul>
+                </div>
+
             </div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Casino Tab -->
+    <div id="casino" class="page">
+        <h1>🃏 Blackjack Casino</h1>
+        <p>Bet some of your clicks and try your luck!</p>
+        <div class="content game-content">
+            <div class="casino-main">
+                <p>Current Clicks: <span id="casinoScore">0</span></p>
+                <label for="casinoBet">Bet Amount:</label>
+                <input type="number" id="casinoBet" min="1" value="100">
+                <button id="casinoPlayBtn">Play Blackjack</button>
+                <div id="casinoResult"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Game Script -->
+<script src="script.js"></script>
 </body>
 </html>
