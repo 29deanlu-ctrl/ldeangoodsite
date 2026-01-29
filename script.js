@@ -11,14 +11,43 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// ==================== TAB SYSTEM ====================
+function setupTabs() {
+    const nav = document.createElement("div");
+    nav.style.display = "flex";
+    nav.style.gap = "10px";
+    nav.style.justifyContent = "center";
+    nav.style.marginBottom = "20px";
+
+    const clickerBtn = document.createElement("button");
+    clickerBtn.textContent = "🎮 Clicker";
+
+    const casinoBtn = document.createElement("button");
+    casinoBtn.textContent = "🃏 Casino";
+
+    [clickerBtn, casinoBtn].forEach(btn => {
+        btn.style.padding = "10px 18px";
+        btn.style.cursor = "pointer";
+    });
+
+    clickerBtn.onclick = () => switchPage("clicker");
+    casinoBtn.onclick = () => switchPage("casino");
+
+    nav.append(clickerBtn, casinoBtn);
+    document.querySelector(".page-container").prepend(nav);
+}
+
+function switchPage(id) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+}
+
 // ==================== USERNAME ====================
 function getUsername() {
     let username = localStorage.getItem("clickerUsername");
     if (!username) {
-        username = prompt("Choose a username for the leaderboard:");
-        if (!username || username.trim() === "") {
-            username = "Anonymous";
-        }
+        username = prompt("Choose a username:");
+        if (!username || username.trim() === "") username = "Anonymous";
         localStorage.setItem("clickerUsername", username);
     }
     return username;
@@ -33,8 +62,8 @@ class AdvancedClickerGame {
         this.score = savedData.score || 0;
         this.perClick = savedData.perClick || 1;
         this.passivePerSecond = savedData.passivePerSecond || 0;
+        this.multiplierValue = savedData.multiplierValue || 2;
         this.photoCount = savedData.photoCount || 1;
-        this.multiplierValue = 2; // static multiplier
 
         const allPhotos = [
             'images/018879bf-19f7-488c-9b8e-b187de3e160d (1).png',
@@ -60,8 +89,7 @@ class AdvancedClickerGame {
         ];
 
         this.photos = allPhotos;
-        document.getElementById("clickerImg").src =
-            savedData.currentPhoto || this.photos[0];
+        document.getElementById("clickerImg").src = savedData.currentPhoto || this.photos[0];
 
         this.photoUpgrades = this.photos.map((photo, index) => ({
             index,
@@ -97,13 +125,14 @@ class AdvancedClickerGame {
             photoCount: this.photoCount,
             currentPhoto: document.getElementById("clickerImg").src,
             photoUpgrades: this.photoUpgrades.map(u => ({ purchased: u.purchased })),
-            powerUpgrades: Object.fromEntries(this.powerUpgrades.map(u => [u.id, u.purchased]))
+            powerUpgrades: Object.fromEntries(this.powerUpgrades.map(u => [u.id, u.purchased])),
+            multiplierValue: this.multiplierValue
         }));
     }
 
     setupEventListeners() {
         document.getElementById("clickerImg").addEventListener("click", () => {
-            this.score += this.perClick; // back to simple per-click
+            this.score += this.perClick * this.multiplierValue;
             this.updateUI();
             this.saveGame();
         });
@@ -112,7 +141,7 @@ class AdvancedClickerGame {
     startGameLoop() {
         setInterval(() => {
             if (this.passivePerSecond > 0) {
-                this.score += this.passivePerSecond;
+                this.score += this.passivePerSecond * this.multiplierValue;
                 this.updateUI();
                 this.saveGame();
             }
@@ -194,11 +223,12 @@ class AdvancedClickerGame {
     }
 
     updateUI() {
-        document.getElementById("clickerScore").textContent = this.score;
+        document.getElementById("clickerScore").textContent = Math.floor(this.score);
         document.getElementById("clickerPerClick").textContent = this.perClick;
         document.getElementById("clickerPassive").textContent = this.passivePerSecond;
         document.getElementById("clickerMultiplier").textContent = `x${this.multiplierValue}`;
         this.initializePowerUpgrades();
+        document.getElementById("casinoScore").textContent = Math.floor(this.score);
     }
 
     async fetchLeaderboard() {
@@ -237,28 +267,134 @@ class AdvancedClickerGame {
     }
 }
 
-// ==================== CASINO ====================
+// ==================== BLACKJACK CASINO (TENSE) ====================
 class BlackjackCasino {
     constructor(game) {
         this.game = game;
-        document.getElementById("casinoPlayBtn")
-            .addEventListener("click", () => this.play());
+        this.resetRound();
+
+        this.area = document.querySelector(".casino-main");
+        this.resultDisplay = document.getElementById("casinoResult");
+        this.betInput = document.getElementById("casinoBet");
+
+        this.createControls();
     }
 
-    play() {
-        const bet = parseInt(document.getElementById("casinoBet").value);
-        if (bet > this.game.score) return;
+    createControls() {
+        this.hitBtn = document.createElement("button");
+        this.standBtn = document.createElement("button");
 
-        this.game.score -= bet;
-        if (Math.random() < 1 / 13) {
-            this.game.score += bet * 10;
+        [this.hitBtn, this.standBtn].forEach(btn => {
+            btn.style.fontSize = "1.5em";
+            btn.style.padding = "12px 25px";
+            btn.style.margin = "10px";
+            btn.style.cursor = "pointer";
+            btn.style.borderRadius = "12px";
+            btn.style.background = "#00d4ff";
+            btn.style.color = "#000";
+            btn.style.fontWeight = "700";
+        });
+
+        this.hitBtn.textContent = "Hit";
+        this.standBtn.textContent = "Stand";
+
+        this.area.append(this.hitBtn, this.standBtn);
+
+        this.hitBtn.onclick = () => this.hit();
+        this.standBtn.onclick = () => this.stand();
+
+        this.updateButtons(false);
+
+        document.getElementById("casinoPlayBtn").onclick = () => this.startRound();
+    }
+
+    updateButtons(active) {
+        this.hitBtn.disabled = !active;
+        this.standBtn.disabled = !active;
+    }
+
+    drawCard(highBias = false) {
+        return highBias ? Math.floor(Math.random() * 4) + 8 : Math.floor(Math.random() * 10) + 2;
+    }
+
+    startRound() {
+        const bet = parseInt(this.betInput.value);
+        if (bet <= 0 || bet > this.game.score) {
+            this.resultDisplay.textContent = "Invalid bet!";
+            return;
         }
+
+        this.resetRound();
+        this.bet = bet;
+        this.game.score -= bet;
+
+        this.playerFavored = Math.random() < 0.35;
+
+        this.playerCards = [this.drawCard(this.playerFavored), this.drawCard(this.playerFavored)];
+        this.dealerCards = [this.drawCard(!this.playerFavored), this.drawCard(!this.playerFavored)];
+
+        this.updateResult();
+        this.updateButtons(true);
         this.game.updateUI();
+    }
+
+    getTotal(cards) {
+        return cards.reduce((a, b) => a + b, 0);
+    }
+
+    updateResult() {
+        this.resultDisplay.textContent = `You: ${this.playerCards.join(" + ")} = ${this.getTotal(this.playerCards)} | Dealer: ${this.dealerCards[0]} + ?`;
+    }
+
+    hit() {
+        this.playerCards.push(this.drawCard(this.playerFavored && this.getTotal(this.playerCards) < 17));
+        const total = this.getTotal(this.playerCards);
+
+        if (total > 21) {
+            this.resultDisplay.textContent = `💥 Bust! You: ${this.playerCards.join(" + ")} = ${total}`;
+            this.endRound();
+        } else {
+            this.updateResult();
+        }
+    }
+
+    stand() {
+        while (this.getTotal(this.dealerCards) < (this.playerFavored ? 16 : 17)) {
+            this.dealerCards.push(this.drawCard(false));
+        }
+
+        const playerTotal = this.getTotal(this.playerCards);
+        const dealerTotal = this.getTotal(this.dealerCards);
+        let message = `You: ${this.playerCards.join(" + ")} = ${playerTotal} | Dealer: ${this.dealerCards.join(" + ")} = ${dealerTotal} — `;
+
+        if (dealerTotal > 21 || playerTotal > dealerTotal) {
+            const win = this.bet * 2;
+            this.game.score += win;
+            message += `🎉 You win ${win}!`;
+        } else {
+            message += "❌ Dealer wins.";
+        }
+
+        this.resultDisplay.textContent = message;
+        this.endRound();
+        this.game.updateUI();
+    }
+
+    endRound() {
+        this.updateButtons(false);
+        this.game.saveGame();
+    }
+
+    resetRound() {
+        this.playerCards = [];
+        this.dealerCards = [];
+        this.bet = 0;
     }
 }
 
 // ==================== INIT ====================
 window.addEventListener("DOMContentLoaded", () => {
+    setupTabs();
     const game = new AdvancedClickerGame();
     new BlackjackCasino(game);
 });
