@@ -57,15 +57,15 @@ function getUsername() {
 class AdvancedClickerGame {
     constructor() {
         this.username = getUsername();
+        const saved = JSON.parse(localStorage.getItem("clickerSave")) || {};
 
-        const savedData = JSON.parse(localStorage.getItem("clickerSave")) || {};
-        this.score = savedData.score || 0;
-        this.perClick = savedData.perClick || 1;
-        this.passivePerSecond = savedData.passivePerSecond || 0;
-        this.multiplierValue = savedData.multiplierValue || 2;
-        this.photoCount = savedData.photoCount || 1;
+        this.score = saved.score || 0;
+        this.perClick = saved.perClick || 1;
+        this.passivePerSecond = saved.passivePerSecond || 0;
+        this.multiplierValue = saved.multiplierValue || 1;
+        this.photoCount = saved.photoCount || 1;
 
-        const allPhotos = [
+        this.photos = [
             'images/018879bf-19f7-488c-9b8e-b187de3e160d (1).png',
             'images/1fa2f337-ba2b-402e-973a-4cddd7761054.png',
             'images/051dde8f-8d8b-474e-9188-282b5adbf160.png',
@@ -88,138 +88,41 @@ class AdvancedClickerGame {
             'images/IMG_8714.jpeg'
         ];
 
-        this.photos = allPhotos;
-        document.getElementById("clickerImg").src = savedData.currentPhoto || this.photos[0];
+        document.getElementById("clickerImg").src =
+            saved.currentPhoto || this.photos[0];
 
-        this.photoUpgrades = this.photos.map((photo, index) => ({
-            index,
-            photo,
-            cost: Math.ceil(Math.pow(2.2, index) * 100),
-            purchased: savedData.photoUpgrades?.[index]?.purchased || index === 0,
-            passiveValue: Math.ceil(index * 0.3),
-            name: `Photo #${index + 1}`
-        }));
-
-        this.powerUpgrades = [
-            { id: "clickPower", name: "+10 Per Click", cost: 500, purchased: savedData.powerUpgrades?.clickPower || 0, costMultiplier: 1.15 },
-            { id: "autoClicker", name: "Auto-Clicker Bot", cost: 2000, purchased: savedData.powerUpgrades?.autoClicker || 0, costMultiplier: 1.2 },
-            { id: "boostMultiplier", name: "Multiplier Boost", cost: 5000, purchased: savedData.powerUpgrades?.boostMultiplier || 0, costMultiplier: 1.25 }
-        ];
-
-        this.setupEventListeners();
-        this.initializePhotoUpgrades();
-        this.initializePowerUpgrades();
+        this.setupClicker();
         this.updateUI();
-        this.startGameLoop();
+        this.startPassive();
         this.fetchLeaderboard();
-
         setInterval(() => this.submitScore(), 10000);
-        window.addEventListener("beforeunload", () => this.submitScore());
     }
 
-    saveGame() {
+    setupClicker() {
+        document.getElementById("clickerImg").onclick = () => {
+            this.score += this.perClick * this.multiplierValue;
+            this.updateUI();
+            this.save();
+        };
+    }
+
+    startPassive() {
+        setInterval(() => {
+            this.score += this.passivePerSecond * this.multiplierValue;
+            this.updateUI();
+            this.save();
+        }, 1000);
+    }
+
+    save() {
         localStorage.setItem("clickerSave", JSON.stringify({
             score: this.score,
             perClick: this.perClick,
             passivePerSecond: this.passivePerSecond,
-            photoCount: this.photoCount,
+            multiplierValue: this.multiplierValue,
             currentPhoto: document.getElementById("clickerImg").src,
-            photoUpgrades: this.photoUpgrades.map(u => ({ purchased: u.purchased })),
-            powerUpgrades: Object.fromEntries(this.powerUpgrades.map(u => [u.id, u.purchased])),
-            multiplierValue: this.multiplierValue
+            photoCount: this.photoCount
         }));
-    }
-
-    setupEventListeners() {
-        document.getElementById("clickerImg").addEventListener("click", () => {
-            this.score += this.perClick * this.multiplierValue;
-            this.updateUI();
-            this.saveGame();
-        });
-    }
-
-    startGameLoop() {
-        setInterval(() => {
-            if (this.passivePerSecond > 0) {
-                this.score += this.passivePerSecond * this.multiplierValue;
-                this.updateUI();
-                this.saveGame();
-            }
-        }, 1000);
-    }
-
-    unlockPhoto(index) {
-        const upg = this.photoUpgrades[index];
-        if (this.score >= upg.cost && !upg.purchased) {
-            this.score -= upg.cost;
-            upg.purchased = true;
-            this.photoCount++;
-            this.passivePerSecond += upg.passiveValue;
-            document.getElementById("clickerImg").src = upg.photo;
-            this.updateUI();
-            this.saveGame();
-        }
-    }
-
-    initializePhotoUpgrades() {
-        const container = document.getElementById("photoUpgrades");
-        container.innerHTML = "";
-
-        this.photoUpgrades.forEach(u => {
-            const btn = document.createElement("button");
-            btn.className = "photo-btn";
-            btn.disabled = u.purchased;
-            if (u.purchased) btn.classList.add("purchased");
-
-            btn.innerHTML = `
-                <div class="photo-inner">
-                    <img src="${u.photo}" alt="${u.name}">
-                </div>
-                <div class="photo-cost">${u.cost}</div>
-            `;
-
-            btn.onclick = () => this.unlockPhoto(u.index);
-            container.appendChild(btn);
-        });
-
-        document.getElementById("photoCount").textContent = this.photoCount;
-    }
-
-    initializePowerUpgrades() {
-        const container = document.getElementById("powerUpgrades");
-        container.innerHTML = "";
-
-        this.powerUpgrades.forEach(u => {
-            const cost = Math.ceil(u.cost * Math.pow(u.costMultiplier, u.purchased));
-            const btn = document.createElement("button");
-            btn.className = "power-btn";
-            btn.disabled = this.score < cost;
-
-            btn.innerHTML = `
-                <div class="power-info">
-                    <span class="power-name">${u.name}</span>
-                    <span class="power-count">Owned: ${u.purchased}</span>
-                </div>
-                <div class="power-cost">${cost}</div>
-            `;
-
-            btn.onclick = () => this.buyPowerUpgrade(u.id);
-            container.appendChild(btn);
-        });
-    }
-
-    buyPowerUpgrade(id) {
-        const upg = this.powerUpgrades.find(u => u.id === id);
-        const cost = Math.ceil(upg.cost * Math.pow(upg.costMultiplier, upg.purchased));
-        if (this.score >= cost) {
-            this.score -= cost;
-            upg.purchased++;
-            if (id === "clickPower") this.perClick += 10;
-            if (id === "autoClicker") this.passivePerSecond += 5;
-            if (id === "boostMultiplier") this.multiplierValue += 0.5;
-            this.updateUI();
-            this.saveGame();
-        }
     }
 
     updateUI() {
@@ -227,168 +130,115 @@ class AdvancedClickerGame {
         document.getElementById("clickerPerClick").textContent = this.perClick;
         document.getElementById("clickerPassive").textContent = this.passivePerSecond;
         document.getElementById("clickerMultiplier").textContent = `x${this.multiplierValue}`;
-        this.initializePowerUpgrades();
         document.getElementById("casinoScore").textContent = Math.floor(this.score);
     }
 
     async fetchLeaderboard() {
         const lb = document.getElementById("leaderboard");
         lb.innerHTML = "";
-
-        const snap = await db.collection("leaderboard")
-            .orderBy("score", "desc")
-            .limit(3)
-            .get();
-
+        const snap = await db.collection("leaderboard").orderBy("score", "desc").limit(3).get();
         let rank = 1;
         snap.forEach(doc => {
-            const d = doc.data();
-            const li = document.createElement("li");
-            li.textContent = `${rank}. ${d.name}: ${d.score}`;
-            lb.appendChild(li);
-            rank++;
+            lb.innerHTML += `<li>${rank++}. ${doc.data().name}: ${Math.floor(doc.data().score)}</li>`;
         });
     }
 
     async submitScore() {
-        try {
-            await db.collection("leaderboard")
-                .doc(this.username)
-                .set({
-                    name: this.username,
-                    score: this.score,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-
-            this.fetchLeaderboard();
-        } catch (err) {
-            console.error(err);
-        }
+        await db.collection("leaderboard").doc(this.username).set({
+            name: this.username,
+            score: this.score
+        }, { merge: true });
+        this.fetchLeaderboard();
     }
 }
 
-// ==================== BLACKJACK CASINO (TENSE) ====================
+// ==================== BLACKJACK ====================
 class BlackjackCasino {
     constructor(game) {
         this.game = game;
-        this.resetRound();
-
-        this.area = document.querySelector(".casino-main");
-        this.resultDisplay = document.getElementById("casinoResult");
         this.betInput = document.getElementById("casinoBet");
-
-        this.createControls();
+        this.result = document.getElementById("casinoResult");
+        document.getElementById("casinoPlayBtn").onclick = () => this.start();
     }
 
-    createControls() {
-        this.hitBtn = document.createElement("button");
-        this.standBtn = document.createElement("button");
-
-        [this.hitBtn, this.standBtn].forEach(btn => {
-            btn.style.fontSize = "1.5em";
-            btn.style.padding = "12px 25px";
-            btn.style.margin = "10px";
-            btn.style.cursor = "pointer";
-            btn.style.borderRadius = "12px";
-            btn.style.background = "#00d4ff";
-            btn.style.color = "#000";
-            btn.style.fontWeight = "700";
-        });
-
-        this.hitBtn.textContent = "Hit";
-        this.standBtn.textContent = "Stand";
-
-        this.area.append(this.hitBtn, this.standBtn);
-
-        this.hitBtn.onclick = () => this.hit();
-        this.standBtn.onclick = () => this.stand();
-
-        this.updateButtons(false);
-
-        document.getElementById("casinoPlayBtn").onclick = () => this.startRound();
+    drawCard() {
+        return Math.floor(Math.random() * 10) + 2;
     }
 
-    updateButtons(active) {
-        this.hitBtn.disabled = !active;
-        this.standBtn.disabled = !active;
-    }
-
-    drawCard(highBias = false) {
-        return highBias ? Math.floor(Math.random() * 4) + 8 : Math.floor(Math.random() * 10) + 2;
-    }
-
-    startRound() {
-        const bet = parseInt(this.betInput.value);
+    start() {
+        const bet = +this.betInput.value;
         if (bet <= 0 || bet > this.game.score) {
-            this.resultDisplay.textContent = "Invalid bet!";
+            this.result.textContent = "Invalid bet.";
             return;
         }
 
-        this.resetRound();
-        this.bet = bet;
         this.game.score -= bet;
+        let player = this.drawCard();
+        let dealer = this.drawCard();
 
-        this.playerFavored = Math.random() < 0.35;
-
-        this.playerCards = [this.drawCard(this.playerFavored), this.drawCard(this.playerFavored)];
-        this.dealerCards = [this.drawCard(!this.playerFavored), this.drawCard(!this.playerFavored)];
-
-        this.updateResult();
-        this.updateButtons(true);
-        this.game.updateUI();
-    }
-
-    getTotal(cards) {
-        return cards.reduce((a, b) => a + b, 0);
-    }
-
-    updateResult() {
-        this.resultDisplay.textContent = `You: ${this.playerCards.join(" + ")} = ${this.getTotal(this.playerCards)} | Dealer: ${this.dealerCards[0]} + ?`;
-    }
-
-    hit() {
-        this.playerCards.push(this.drawCard(this.playerFavored && this.getTotal(this.playerCards) < 17));
-        const total = this.getTotal(this.playerCards);
-
-        if (total > 21) {
-            this.resultDisplay.textContent = `💥 Bust! You: ${this.playerCards.join(" + ")} = ${total}`;
-            this.endRound();
+        if (player === dealer) {
+            this.game.score += bet;
+            this.result.textContent = "Tie! Try again.";
+        } else if (player > dealer) {
+            this.game.score += bet * 2;
+            this.result.textContent = `You win! (${player} vs ${dealer})`;
         } else {
-            this.updateResult();
-        }
-    }
-
-    stand() {
-        while (this.getTotal(this.dealerCards) < (this.playerFavored ? 16 : 17)) {
-            this.dealerCards.push(this.drawCard(false));
+            this.result.textContent = `You lose. (${player} vs ${dealer})`;
         }
 
-        const playerTotal = this.getTotal(this.playerCards);
-        const dealerTotal = this.getTotal(this.dealerCards);
-        let message = `You: ${this.playerCards.join(" + ")} = ${playerTotal} | Dealer: ${this.dealerCards.join(" + ")} = ${dealerTotal} — `;
-
-        if (dealerTotal > 21 || playerTotal > dealerTotal) {
-            const win = this.bet * 2;
-            this.game.score += win;
-            message += `🎉 You win ${win}!`;
-        } else {
-            message += "❌ Dealer wins.";
-        }
-
-        this.resultDisplay.textContent = message;
-        this.endRound();
         this.game.updateUI();
+        this.game.save();
+    }
+}
+
+// ==================== MYSTERY BOX ====================
+class MysteryBox {
+    constructor(game) {
+        this.game = game;
+        this.result = document.getElementById("casinoResult");
     }
 
-    endRound() {
-        this.updateButtons(false);
-        this.game.saveGame();
+    open(bet) {
+        if (bet <= 0 || bet > this.game.score) return;
+
+        this.game.score -= bet;
+        const roll = Math.random();
+        let reward = 0;
+
+        if (roll < 0.4) reward = bet * 0.5;
+        else if (roll < 0.7) reward = bet * 1.5;
+        else if (roll < 0.9) reward = bet * 3;
+        else reward = bet * 10;
+
+        this.game.score += reward;
+        this.result.textContent = `🎁 Mystery Box gave you ${Math.floor(reward)} clicks!`;
+        this.game.updateUI();
+        this.game.save();
+    }
+}
+
+// ==================== ROULETTE ====================
+class Roulette {
+    constructor(game) {
+        this.game = game;
+        this.result = document.getElementById("casinoResult");
     }
 
-    resetRound() {
-        this.playerCards = [];
-        this.dealerCards = [];
-        this.bet = 0;
+    spin(bet, guess) {
+        if (bet <= 0 || bet > this.game.score) return;
+
+        this.game.score -= bet;
+        const number = Math.floor(Math.random() * 12) + 1;
+
+        if (number === guess) {
+            this.game.score += bet * 12;
+            this.result.textContent = `🎯 Hit ${number}! Jackpot!`;
+        } else {
+            this.result.textContent = `❌ Landed on ${number}`;
+        }
+
+        this.game.updateUI();
+        this.game.save();
     }
 }
 
@@ -397,4 +247,6 @@ window.addEventListener("DOMContentLoaded", () => {
     setupTabs();
     const game = new AdvancedClickerGame();
     new BlackjackCasino(game);
+    new MysteryBox(game);
+    new Roulette(game);
 });

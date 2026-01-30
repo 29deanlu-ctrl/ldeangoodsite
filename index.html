@@ -7,14 +7,17 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
 <div class="page-container">
 
-    <!-- Clicker Tab -->
+    <!-- CLICKER TAB -->
     <div id="clicker" class="page active">
         <h1>Keegz Klicker</h1>
         <p>Collect all photos and climb the leaderboard!</p>
+
         <div class="content game-content">
             <div class="clicker-main">
+
                 <div class="top-stats">
                     <div class="stat-box big">
                         <p>Score</p>
@@ -57,28 +60,68 @@
         </div>
     </div>
 
-    <!-- Casino Tab -->
+    <!-- CASINO TAB -->
     <div id="casino" class="page">
-        <h1>🃏 Blackjack Casino</h1>
-        <p>Bet some of your clicks and try your luck!</p>
+        <h1>🃏 Casino</h1>
+        <p>Bet your clicks and test your luck.</p>
+
         <div class="content game-content">
             <div class="casino-main">
+
+                <!-- BLACKJACK -->
+                <h2>♠ Blackjack</h2>
                 <p>Current Clicks: <span id="casinoScore">0</span></p>
+
                 <label for="casinoBet">Bet Amount:</label>
                 <input type="number" id="casinoBet" min="1" value="100">
-                <button id="casinoPlayBtn">Play Blackjack</button>
-                <div id="casinoResult"></div>
+                <button id="casinoPlayBtn">Deal Cards</button>
+
+                <div id="casinoResult" style="margin-top:15px;"></div>
+
+                <hr>
+
+                <!-- MYSTERY BOX -->
+                <h2>🎁 Mystery Box</h2>
+                <p>Pay clicks for a random reward.</p>
+
+                <label for="mysteryCost">Box Cost:</label>
+                <input type="number" id="mysteryCost" value="250" min="1">
+                <button id="openMystery">Open Box</button>
+
+                <div id="mysteryResult" style="margin-top:10px;"></div>
+
+                <hr>
+
+                <!-- ROULETTE -->
+                <h2>🎡 Roulette</h2>
+                <p>Pick a color and spin.</p>
+
+                <select id="roulettePick">
+                    <option value="red">🔴 Red (2×)</option>
+                    <option value="black">⚫ Black (2×)</option>
+                    <option value="green">🟢 Green (14×)</option>
+                </select>
+
+                <br><br>
+
+                <label for="rouletteBet">Bet Amount:</label>
+                <input type="number" id="rouletteBet" value="100" min="1">
+                <button id="spinRoulette">Spin Wheel</button>
+
+                <div id="rouletteResult" style="margin-top:10px;"></div>
+
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- Firebase SDK -->
+<!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- Game Script -->
+<!-- MAIN SCRIPT -->
 <script src="script.js"></script>
+
 </body>
 </html>
