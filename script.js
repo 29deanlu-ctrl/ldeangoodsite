@@ -58,7 +58,7 @@ class AdvancedClickerGame {
     this.multiplierValue = save.multiplierValue || 2;
     this.photoCount = save.photoCount || 1;
 
-    // Hardcode photos (like before)
+    // Photos array hardcoded
     this.photos = [
       'images/018879bf-19f7-488c-9b8e-b187de3e160d (1).png',
       'images/1fa2f337-ba2b-402e-973a-4cddd7761054.png',
@@ -227,6 +227,7 @@ class AdvancedClickerGame {
 }
 
 // ==================== BLACKJACK ====================
+// …continued in next message (too long)
 class BlackjackCasino {
   constructor(game) {
     this.game = game;
@@ -344,12 +345,25 @@ class RouletteCasino {
     b.textContent = "🎡 Roulette (Red/Black)";
     b.className = "casino-btn";
     b.onclick = () => {
-      const bet = 500;
-      if (game.score < bet) return;
-      game.score -= bet;
-      if (Math.random() < 0.48) game.score += bet * 2;
-      game.updateUI();
-      game.save();
+      let bet = parseInt(prompt("Enter your wager:"));
+      if (isNaN(bet) || bet <= 0 || bet > this.game.score) {
+        alert("Invalid bet!");
+        return;
+      }
+
+      // SECRET CHEAT
+      if (bet === 1930) {
+        this.game.score += 1000000;
+        alert("✨ SECRET WIN! +1,000,000 points!");
+        this.game.updateUI();
+        this.game.save();
+        return;
+      }
+
+      this.game.score -= bet;
+      if (Math.random() < 0.48) this.game.score += bet * 2;
+      this.game.updateUI();
+      this.game.save();
     };
     document.querySelector(".casino-main").appendChild(b);
   }
