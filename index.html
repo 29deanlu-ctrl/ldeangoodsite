@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LDEAN DEV - Keegz Klicker</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LDEAN DEV - Keegz Klicker</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -23,17 +23,14 @@
                         <p>Score</p>
                         <h2 id="clickerScore">0</h2>
                     </div>
-
                     <div class="stat-box">
                         <p>Multiplier Buff</p>
                         <h2 id="clickerMultiplier">x2</h2>
                     </div>
-
                     <div class="stat-box">
                         <p>Per Click</p>
                         <h2 id="clickerPerClick">1</h2>
                     </div>
-
                     <div class="stat-box">
                         <p>Passive/sec</p>
                         <h2 id="clickerPassive">0</h2>
@@ -45,9 +42,7 @@
                 </div>
 
                 <div class="photo-grid">
-                    <h3>
-                        📸 Photo Collection (<span id="photoCount">0</span>/20)
-                    </h3>
+                    <h3>📸 Photo Collection (<span id="photoCount">0</span>/20)</h3>
                     <div id="photoUpgrades" class="photos-container"></div>
                 </div>
 
@@ -75,15 +70,12 @@
 
                 <!-- BLACKJACK -->
                 <h2>♠ Blackjack</h2>
-                <p>
-                    Current Clicks:
-                    <span id="casinoScore">0</span>
-                </p>
-
+                <p>Current Clicks: <span id="casinoScore">0</span></p>
                 <label for="casinoBet">Bet Amount:</label>
                 <input type="number" id="casinoBet" min="1" value="100">
                 <button id="casinoPlayBtn">Deal Cards</button>
-
+                <button id="casinoHit">Hit</button>
+                <button id="casinoStand">Stand</button>
                 <div id="casinoResult" style="margin-top:15px;"></div>
 
                 <hr>
@@ -91,11 +83,9 @@
                 <!-- MYSTERY BOX -->
                 <h2>🎁 Mystery Box</h2>
                 <p>Pay clicks for a random reward.</p>
-
                 <label for="mysteryCost">Box Cost:</label>
                 <input type="number" id="mysteryCost" value="250" min="1">
                 <button id="openMystery">Open Box</button>
-
                 <div id="mysteryResult" style="margin-top:10px;"></div>
 
                 <hr>
@@ -103,19 +93,15 @@
                 <!-- ROULETTE -->
                 <h2>🎡 Roulette</h2>
                 <p>Pick a color and spin.</p>
-
                 <select id="roulettePick">
                     <option value="red">🔴 Red (2×)</option>
                     <option value="black">⚫ Black (2×)</option>
                     <option value="green">🟢 Green (14×)</option>
                 </select>
-
                 <br><br>
-
                 <label for="rouletteBet">Bet Amount:</label>
                 <input type="number" id="rouletteBet" value="100" min="1">
                 <button id="spinRoulette">Spin Wheel</button>
-
                 <div id="rouletteResult" style="margin-top:10px;"></div>
 
             </div>
