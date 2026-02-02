@@ -232,15 +232,9 @@ class BlackjackCasino {
     this.game = game;
     this.inRound = false;
 
-    // Create buttons dynamically
-    const casinoDiv = document.querySelector(".casino-main");
-    this.hitBtn = document.createElement("button");
-    this.hitBtn.textContent = "Hit";
-    this.standBtn = document.createElement("button");
-    this.standBtn.textContent = "Stand";
-
-    casinoDiv.insertBefore(this.hitBtn, document.getElementById("casinoResult"));
-    casinoDiv.insertBefore(this.standBtn, document.getElementById("casinoResult"));
+    // Use existing HTML buttons
+    this.hitBtn = document.getElementById("casinoHit");
+    this.standBtn = document.getElementById("casinoStand");
 
     this.startBtn = document.getElementById("casinoPlayBtn");
     this.betInput = document.getElementById("casinoBet");
@@ -394,4 +388,18 @@ window.onload = () => {
   new BlackjackCasino(game);
   new MysteryBoxCasino(game);
   new RouletteCasino(game);
+
+  // Secret code 1930
+  let codeInput = "";
+  window.addEventListener("keydown", (e) => {
+    codeInput += e.key;
+    if (codeInput.endsWith("1930")) {
+      alert("Secret code unlocked! +500 clicks!");
+      game.score += 500;
+      game.updateUI();
+      game.save();
+      codeInput = "";
+    }
+    if (codeInput.length > 10) codeInput = codeInput.slice(-10);
+  });
 };
