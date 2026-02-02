@@ -1,4 +1,4 @@
-// ==================== FIREBASE ====================
+// ==================== FIREBASE SETUP ====================
 const firebaseConfig = {
   apiKey: "AIzaSyCTdrmc2bX4Q3OXyf3L9PGGFluOszBPtO0",
   authDomain: "ldean-clicker-leaderboard.firebaseapp.com",
@@ -11,19 +11,21 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ==================== TABS ====================
+// ==================== TAB SYSTEM ====================
 function setupTabs() {
   const nav = document.createElement("div");
   nav.style.display = "flex";
-  nav.style.justifyContent = "center";
   nav.style.gap = "10px";
+  nav.style.justifyContent = "center";
   nav.style.marginBottom = "20px";
 
-  ["🎮 Clicker", "🃏 Casino"].forEach((t, i) => {
-    const b = document.createElement("button");
-    b.textContent = t;
-    b.onclick = () => switchPage(i === 0 ? "clicker" : "casino");
-    nav.appendChild(b);
+  ["🎮 Clicker", "🃏 Casino"].forEach((txt, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = txt;
+    btn.style.padding = "10px 18px";
+    btn.style.cursor = "pointer";
+    btn.onclick = () => switchPage(i === 0 ? "clicker" : "casino");
+    nav.appendChild(btn);
   });
 
   document.querySelector(".page-container").prepend(nav);
@@ -38,7 +40,7 @@ function switchPage(id) {
 function getUsername() {
   let u = localStorage.getItem("clickerUsername");
   if (!u) {
-    u = prompt("Choose a username") || "Anonymous";
+    u = prompt("Choose a username:") || "Anonymous";
     localStorage.setItem("clickerUsername", u);
   }
   return u;
@@ -52,100 +54,142 @@ class AdvancedClickerGame {
 
     this.score = save.score || 0;
     this.perClick = save.perClick || 1;
-    this.passive = save.passive || 0;
-    this.multiplier = save.multiplier || 2;
+    this.passivePerSecond = save.passivePerSecond || 0;
+    this.multiplierValue = save.multiplierValue || 2;
     this.photoCount = save.photoCount || 1;
 
+    // Photos array
     this.photos = [
-      "img/1.png","img/2.png","img/3.png","img/4.png","img/5.png"
+      'images/018879bf-19f7-488c-9b8e-b187de3e160d (1).png',
+      'images/1fa2f337-ba2b-402e-973a-4cddd7761054.png',
+      'images/051dde8f-8d8b-474e-9188-282b5adbf160.png',
+      'images/10b773cf-6f38-4daf-b13b-40835c18fea8.png',
+      'images/4359f31f-41df-4605-a3a0-f60d82e4d54d.png',
+      'images/5701c659-4d24-4faa-b1ba-70cd37623490.png',
+      'images/6f9d12ac-dd1b-4417-873e-de503eaf6b4f.png',
+      'images/820be2fe-0cf5-4f99-afec-f1a5c9acc251.png',
+      'images/9c85eb86-70a4-4a33-8363-26bb443117be.png',
+      'images/9d6b7aee-b355-4d7f-8acb-1cf1ad31493f.png',
+      'images/a413dca6-b8c3-43a8-98e0-2a9fe01d0ef1.png',
+      'images/ad8cfdc8-d111-4daf-8f90-01c8c63e533b.png',
+      'images/b62dbd0c-9860-40da-8dc1-18fcbb892034.png',
+      'images/cdabf601-bec2-45d2-be3e-075525118585.png',
+      'images/d1dd96e3-85b4-4250-bfa4-b53a83aaf2a3.png',
+      'images/dcf4e2a1-954b-4486-aef7-42c041693c43.png',
+      'images/de5a2afd-f1e4-4d04-bf90-c2995905e6e6.png',
+      'images/e9fd8bda-f553-4d38-ad50-c878b86c0eb9.png',
+      'images/f3a95d98-89d8-4e5f-8527-55b9e15d685d.png',
+      'images/IMG_8714.jpeg'
     ];
 
     this.photoUpgrades = this.photos.map((p, i) => ({
+      index: i,
       photo: p,
-      cost: 100 * (i + 1) ** 2,
-      owned: i === 0 || save.photos?.[i]
+      cost: Math.ceil(Math.pow(2.2, i) * 100),
+      purchased: save.photoUpgrades?.[i]?.purchased || i === 0,
+      passiveValue: Math.ceil(i * 0.3)
     }));
 
     this.powerUpgrades = [
-      { id: "click", name: "+10 Click", base: 500, owned: save.p?.c || 0 },
-      { id: "auto", name: "Auto", base: 2000, owned: save.p?.a || 0 },
-      { id: "multi", name: "Multiplier", base: 5000, owned: save.p?.m || 0 }
+      { id: "click", name: "+10 Per Click", base: 500, owned: save.power?.click || 0 },
+      { id: "auto", name: "Auto Clicker", base: 2000, owned: save.power?.auto || 0 },
+      { id: "multi", name: "Multiplier Boost", base: 5000, owned: save.power?.multi || 0 }
     ];
 
-    clickerImg.src = save.currentPhoto || this.photos[0];
-    this.bind();
+    document.getElementById("clickerImg").src = save.currentPhoto || this.photoUpgrades[0].photo;
+
+    this.bindClick();
     this.renderPhotos();
     this.renderPowers();
     this.loop();
-    this.update();
-    this.leaderboard();
+    this.updateUI();
+    this.fetchLeaderboard();
+
+    setInterval(() => this.submitScore(), 10000);
   }
 
-  bind() {
-    clickerImg.onclick = () => {
-      this.score += this.perClick * this.multiplier;
-      this.update();
+  bindClick() {
+    document.getElementById("clickerImg").onclick = () => {
+      this.score += this.perClick * this.multiplierValue;
+      this.updateUI();
       this.save();
     };
   }
 
   loop() {
     setInterval(() => {
-      this.score += this.passive * this.multiplier;
-      this.update();
-      this.save();
+      if (this.passivePerSecond > 0) {
+        this.score += this.passivePerSecond * this.multiplierValue;
+        this.updateUI();
+        this.save();
+      }
     }, 1000);
   }
 
   renderPhotos() {
-    photoUpgrades.innerHTML = "";
-    this.photoUpgrades.forEach((p, i) => {
+    const c = document.getElementById("photoUpgrades");
+    c.innerHTML = "";
+    this.photoUpgrades.forEach(u => {
       const b = document.createElement("button");
       b.className = "photo-btn";
-      b.disabled = p.owned;
-      b.innerHTML = `<img src="${p.photo}"><span>${p.cost}</span>`;
+      if (u.purchased) b.classList.add("purchased");
+      b.disabled = u.purchased;
+      b.innerHTML = `
+        <div class="photo-inner"><img src="${u.photo}" alt="Photo ${u.index + 1}"></div>
+        <div class="photo-cost">${u.cost}</div>
+      `;
       b.onclick = () => {
-        if (this.score >= p.cost) {
-          this.score -= p.cost;
-          p.owned = true;
-          this.passive += i + 1;
-          clickerImg.src = p.photo;
+        if (!u.purchased && this.score >= u.cost) {
+          this.score -= u.cost;
+          u.purchased = true;
+          this.passivePerSecond += u.passiveValue;
+          document.getElementById("clickerImg").src = u.photo;
           this.photoCount++;
-          this.update();
+          this.updateUI();
           this.save();
         }
       };
-      photoUpgrades.appendChild(b);
+      c.appendChild(b);
     });
-    photoCount.textContent = this.photoCount;
+    document.getElementById("photoCount").textContent = this.photoCount;
   }
 
   renderPowers() {
-    powerUpgrades.innerHTML = "";
+    const c = document.getElementById("powerUpgrades");
+    c.innerHTML = "";
     this.powerUpgrades.forEach(p => {
-      const cost = Math.floor(p.base * 1.3 ** p.owned);
+      const cost = Math.ceil(p.base * Math.pow(1.2, p.owned));
       const b = document.createElement("button");
-      b.textContent = `${p.name} (${cost})`;
+      b.className = "power-btn";
+      b.disabled = this.score < cost;
+      b.innerHTML = `
+        <div class="power-info">
+          <span class="power-name">${p.name}</span>
+          <span class="power-count">Owned: ${p.owned}</span>
+        </div>
+        <div class="power-cost">${cost}</div>
+      `;
       b.onclick = () => {
-        if (this.score < cost) return;
-        this.score -= cost;
-        p.owned++;
-        if (p.id === "click") this.perClick += 10;
-        if (p.id === "auto") this.passive += 5;
-        if (p.id === "multi") this.multiplier += 0.5;
-        this.update();
-        this.save();
+        if (this.score >= cost) {
+          this.score -= cost;
+          p.owned++;
+          if (p.id === "click") this.perClick += 10;
+          if (p.id === "auto") this.passivePerSecond += 5;
+          if (p.id === "multi") this.multiplierValue += 0.5;
+          this.updateUI();
+          this.save();
+        }
       };
-      powerUpgrades.appendChild(b);
+      c.appendChild(b);
     });
   }
 
-  update() {
-    clickerScore.textContent = Math.floor(this.score);
-    clickerPerClick.textContent = this.perClick;
-    clickerPassive.textContent = this.passive;
-    clickerMultiplier.textContent = "x" + this.multiplier;
-    casinoScore.textContent = Math.floor(this.score);
+  updateUI() {
+    document.getElementById("clickerScore").textContent = Math.floor(this.score);
+    document.getElementById("clickerPerClick").textContent = this.perClick;
+    document.getElementById("clickerPassive").textContent = this.passivePerSecond;
+    document.getElementById("clickerMultiplier").textContent = "x" + this.multiplierValue;
+    document.getElementById("casinoScore").textContent = Math.floor(this.score);
     this.renderPowers();
   }
 
@@ -153,132 +197,201 @@ class AdvancedClickerGame {
     localStorage.setItem("clickerSave", JSON.stringify({
       score: this.score,
       perClick: this.perClick,
-      passive: this.passive,
-      multiplier: this.multiplier,
+      passivePerSecond: this.passivePerSecond,
+      multiplierValue: this.multiplierValue,
       photoCount: this.photoCount,
-      currentPhoto: clickerImg.src,
-      photos: this.photoUpgrades.map(p => p.owned),
-      p: {
-        c: this.powerUpgrades[0].owned,
-        a: this.powerUpgrades[1].owned,
-        m: this.powerUpgrades[2].owned
-      }
+      currentPhoto: document.getElementById("clickerImg").src,
+      photoUpgrades: this.photoUpgrades.map(p => ({ purchased: p.purchased })),
+      power: Object.fromEntries(this.powerUpgrades.map(p => [p.id, p.owned]))
     }));
   }
 
-  leaderboard() {
-    db.collection("leaderboard")
-      .doc(this.username)
-      .set({ name: this.username, score: this.score }, { merge: true });
+  async fetchLeaderboard() {
+    const lb = document.getElementById("leaderboard");
+    lb.innerHTML = "";
+    const snap = await db.collection("leaderboard").orderBy("score", "desc").limit(3).get();
+    let r = 1;
+    snap.forEach(d => {
+      const data = d.data();
+      lb.innerHTML += `<li>${r++}. ${data.name}: ${Math.floor(data.score)}</li>`;
+    });
+  }
+
+  submitScore() {
+    db.collection("leaderboard").doc(this.username).set({
+      name: this.username,
+      score: this.score,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
   }
 }
 
 // ==================== BLACKJACK ====================
-class Blackjack {
+class BlackjackCasino {
   constructor(game) {
     this.game = game;
-    this.reset();
-    casinoPlayBtn.onclick = () => this.deal();
+    this.inRound = false;
+
+    // Create buttons dynamically
+    const casinoDiv = document.querySelector(".casino-main");
+    this.hitBtn = document.createElement("button");
+    this.hitBtn.textContent = "Hit";
+    this.standBtn = document.createElement("button");
+    this.standBtn.textContent = "Stand";
+
+    casinoDiv.insertBefore(this.hitBtn, document.getElementById("casinoResult"));
+    casinoDiv.insertBefore(this.standBtn, document.getElementById("casinoResult"));
+
+    this.startBtn = document.getElementById("casinoPlayBtn");
+    this.betInput = document.getElementById("casinoBet");
+    this.resultDisplay = document.getElementById("casinoResult");
+
+    this.startBtn.onclick = () => this.startRound();
+    this.hitBtn.onclick = () => this.hit();
+    this.standBtn.onclick = () => this.stand();
+
+    this.updateButtons(false);
   }
 
-  draw() {
-    return Math.floor(Math.random() * 10) + 2;
+  updateButtons(active) {
+    this.hitBtn.disabled = !active;
+    this.standBtn.disabled = !active;
   }
 
-  deal() {
-    this.bet = +casinoBet.value;
-    if (this.bet <= 0 || this.bet > this.game.score) return;
+  drawCard() { return Math.floor(Math.random() * 10) + 2; }
 
-    this.game.score -= this.bet;
-    this.player = [this.draw(), this.draw()];
-    this.dealer = [this.draw(), this.draw()];
-    casinoResult.innerHTML = `
-      You: ${this.player.join(", ")} (${this.sum(this.player)})<br>
-      Dealer shows: ${this.dealer[0]}<br>
-      <button id="hitBtn">Hit</button>
-      <button id="standBtn">Stand</button>
-    `;
-    hitBtn.onclick = () => this.hit();
-    standBtn.onclick = () => this.stand();
-    this.game.update();
+  startRound() {
+    const bet = parseInt(this.betInput.value);
+    if (bet <= 0 || bet > this.game.score) {
+      this.resultDisplay.textContent = "Invalid bet!";
+      return;
+    }
+    this.inRound = true;
+    this.bet = bet;
+    this.game.score -= bet;
+    this.playerCards = [this.drawCard(), this.drawCard()];
+    this.dealerCards = [this.drawCard(), this.drawCard()];
+    this.updateResult();
+    this.updateButtons(true);
+    this.game.updateUI();
+  }
+
+  getTotal(cards) { return cards.reduce((a, b) => a + b, 0); }
+
+  updateResult() {
+    this.resultDisplay.textContent = `You: ${this.playerCards.join(" + ")} = ${this.getTotal(this.playerCards)} | Dealer: ${this.dealerCards[0]} + ?`;
   }
 
   hit() {
-    this.player.push(this.draw());
-    if (this.sum(this.player) > 21) this.end("Bust! You lose.");
-    else this.deal();
+    if (!this.inRound) return;
+    this.playerCards.push(this.drawCard());
+    const total = this.getTotal(this.playerCards);
+    if (total > 21) {
+      this.resultDisplay.textContent = `💥 Bust! You: ${this.playerCards.join(" + ")} = ${total}`;
+      this.endRound();
+    } else this.updateResult();
   }
 
   stand() {
-    while (this.sum(this.dealer) < 17) this.dealer.push(this.draw());
-    const p = this.sum(this.player);
-    const d = this.sum(this.dealer);
-    if (d > 21 || p > d) this.win();
-    else this.end("Dealer wins.");
+    if (!this.inRound) return;
+    while (this.getTotal(this.dealerCards) < 17) this.dealerCards.push(this.drawCard());
+    const playerTotal = this.getTotal(this.playerCards);
+    const dealerTotal = this.getTotal(this.dealerCards);
+    let message = `You: ${this.playerCards.join(" + ")} = ${playerTotal} | Dealer: ${this.dealerCards.join(" + ")} = ${dealerTotal} — `;
+    if (dealerTotal > 21 || (playerTotal <= 21 && playerTotal > dealerTotal)) {
+      this.game.score += this.bet * 2;
+      message += `🎉 You win ${this.bet * 2}!`;
+    } else if (playerTotal === dealerTotal) {
+      this.game.score += this.bet;
+      message += "Tie — Bet returned!";
+    } else {
+      message += "❌ Dealer wins.";
+    }
+    this.resultDisplay.textContent = message;
+    this.endRound();
+    this.game.updateUI();
   }
 
-  sum(h) {
-    return h.reduce((a, b) => a + b, 0);
-  }
-
-  win() {
-    this.game.score += this.bet * 2;
-    this.end("You win!");
-  }
-
-  end(msg) {
-    casinoResult.innerHTML += `<br>${msg}`;
-    this.game.update();
+  endRound() {
+    this.inRound = false;
+    this.updateButtons(false);
     this.game.save();
   }
-
-  reset() {}
 }
 
 // ==================== MYSTERY BOX ====================
-openMystery.onclick = () => {
-  const cost = +mysteryCost.value;
-  if (game.score < cost) return;
-  game.score -= cost;
-  const r = Math.random();
-  let win =
-    r < 0.4 ? 0 :
-    r < 0.7 ? cost * 2 :
-    r < 0.9 ? cost * 5 :
-    cost * 20;
-  game.score += win;
-  mysteryResult.textContent = `You won ${win}!`;
-  game.update();
-  game.save();
-};
+class MysteryBoxCasino {
+  constructor(game) {
+    this.game = game;
+    const btn = document.getElementById("openMystery");
+    const costInput = document.getElementById("mysteryCost");
+    const display = document.getElementById("mysteryResult");
+
+    btn.onclick = () => {
+      const cost = parseInt(costInput.value);
+      if (isNaN(cost) || cost <= 0 || cost > this.game.score) {
+        display.textContent = "Not enough clicks!";
+        return;
+      }
+      this.game.score -= cost;
+      const r = Math.random();
+      let reward = 0;
+      if (r < 0.4) reward = 0;
+      else if (r < 0.7) reward = Math.floor(cost * 1.5);
+      else if (r < 0.9) reward = Math.floor(cost * 3);
+      else reward = Math.floor(cost * 10);
+      this.game.score += reward;
+      display.textContent = `You got ${reward} clicks!`;
+      this.game.updateUI();
+      this.game.save();
+    };
+  }
+}
 
 // ==================== ROULETTE ====================
-spinRoulette.onclick = () => {
-  const bet = +rouletteBet.value;
-  if (bet === 1930) {
-    game.score += 1_000_000;
-    rouletteResult.textContent = "💀 SECRET JACKPOT UNLOCKED";
-    game.update();
-    return;
+class RouletteCasino {
+  constructor(game) {
+    this.game = game;
+    const btn = document.getElementById("spinRoulette");
+    const betInput = document.getElementById("rouletteBet");
+    const pickInput = document.getElementById("roulettePick");
+    const display = document.getElementById("rouletteResult");
+
+    btn.onclick = () => {
+      const bet = parseInt(betInput.value);
+      const pick = pickInput.value;
+      if (isNaN(bet) || bet <= 0 || bet > this.game.score) {
+        display.textContent = "Invalid bet!";
+        return;
+      }
+
+      this.game.score -= bet;
+      const spin = Math.random();
+      let result = "";
+      let multiplier = 0;
+
+      if (spin < 0.48) result = "red";
+      else if (spin < 0.96) result = "black";
+      else result = "green";
+
+      if (result === pick) {
+        multiplier = result === "green" ? 14 : 2;
+        this.game.score += bet * multiplier;
+        display.textContent = `🎉 ${result.toUpperCase()}! You won ${bet * multiplier} clicks!`;
+      } else {
+        display.textContent = `❌ ${result.toUpperCase()}! You lost ${bet} clicks.`;
+      }
+      this.game.updateUI();
+      this.game.save();
+    };
   }
-  if (game.score < bet) return;
-  game.score -= bet;
-
-  const roll = Math.random();
-  const result = roll < 0.48 ? "red" : roll < 0.96 ? "black" : "green";
-  if (roulettePick.value === result) {
-    game.score += bet * (result === "green" ? 14 : 2);
-    rouletteResult.textContent = "You win!";
-  } else rouletteResult.textContent = "You lose.";
-
-  game.update();
-  game.save();
-};
+}
 
 // ==================== INIT ====================
-let game;
 window.onload = () => {
   setupTabs();
-  game = new AdvancedClickerGame();
-  new Blackjack(game);
+  const game = new AdvancedClickerGame();
+  new BlackjackCasino(game);
+  new MysteryBoxCasino(game);
+  new RouletteCasino(game);
 };
