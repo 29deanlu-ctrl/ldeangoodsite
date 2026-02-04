@@ -357,27 +357,39 @@ class MysteryBoxCasino {
    const costInput = document.getElementById("mysteryCost");
    const display = document.getElementById("mysteryResult");
 
-
    btn.onclick = () => {
      const cost = parseInt(costInput.value);
      if (isNaN(cost) || cost <= 0 || cost > this.game.score) {
        display.textContent = "Not enough clicks!";
        return;
      }
+
      this.game.score -= cost;
-     const r = Math.random();
+
+     // 🎯 1-in-6 win rate
+     const roll = Math.floor(Math.random() * 6); // 0–5
      let reward = 0;
-     if (r < 0.4) reward = 0;
-     else if (r < 0.7) reward = Math.floor(cost * 1.5);
-     else if (r < 0.9) reward = Math.floor(cost * 3);
-     else reward = Math.floor(cost * 10);
+
+     if (roll === 0) {
+       // Win (exactly 1 out of 6)
+       const tier = Math.random();
+       if (tier < 0.6) reward = Math.floor(cost * 2);
+       else if (tier < 0.9) reward = Math.floor(cost * 4);
+       else reward = Math.floor(cost * 10);
+     }
+
      this.game.score += reward;
-     display.textContent = `You got ${reward} clicks!`;
+
+     display.textContent = reward > 0
+       ? `🎉 JACKPOT! You won ${reward} clicks!`
+       : `❌ Empty box… better luck next time.`;
+
      this.game.updateUI();
      this.game.save();
    };
  }
 }
+
 
 
 // ==================== ROULETTE ====================
