@@ -230,7 +230,7 @@ class AdvancedClickerGame {
  async fetchLeaderboard() {
    const lb = document.getElementById("leaderboard");
    lb.innerHTML = "";
-   const snap = await db.collection("leaderboard").orderBy("score", "desc").limit(3).get();
+   const snap = await db.collection("leaderboard").orderBy("score", "desc").limit(5).get();
    let r = 1;
    snap.forEach(d => {
      const data = d.data();
