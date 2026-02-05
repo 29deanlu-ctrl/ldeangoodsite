@@ -144,32 +144,44 @@ class AdvancedClickerGame {
 
 
  renderPhotos() {
-   const c = document.getElementById("photoUpgrades");
-   c.innerHTML = "";
-   this.photoUpgrades.forEach(u => {
-     const b = document.createElement("button");
-     b.className = "photo-btn";
-     if (u.purchased) b.classList.add("purchased");
-     b.disabled = u.purchased;
-     b.innerHTML = `
-       <div class="photo-inner"><img src="${u.photo}" alt="Photo ${u.index + 1}"></div>
-       <div class="photo-cost">${u.cost}</div>
-     `;
-     b.onclick = () => {
-       if (!u.purchased && this.score >= u.cost) {
-         this.score -= u.cost;
-         u.purchased = true;
-         this.passivePerSecond += u.passiveValue;
-         document.getElementById("clickerImg").src = u.photo;
-         this.photoCount++;
-         this.updateUI();
-         this.save();
-       }
-     };
-     c.appendChild(b);
-   });
-   document.getElementById("photoCount").textContent = this.photoCount;
- }
+  const c = document.getElementById("photoUpgrades");
+  c.innerHTML = "";
+
+  this.photoUpgrades.forEach(u => {
+    const b = document.createElement("button");
+    b.className = "photo-btn";
+
+    if (u.purchased) b.classList.add("purchased");
+
+    // ✅ disable if bought OR can't afford
+    b.disabled = u.purchased || this.score < u.cost;
+
+    b.innerHTML = `
+      <div class="photo-inner">
+        <img src="${u.photo}" alt="Photo ${u.index + 1}">
+      </div>
+      <div class="photo-cost">${u.cost}</div>
+    `;
+
+    b.onclick = () => {
+      if (!u.purchased && this.score >= u.cost) {
+        this.score -= u.cost;
+        u.purchased = true;
+        this.passivePerSecond += u.passiveValue;
+        document.getElementById("clickerImg").src = u.photo;
+        this.photoCount++;
+
+        this.updateUI();
+        this.save();
+      }
+    };
+
+    c.appendChild(b);
+  });
+
+  document.getElementById("photoCount").textContent = this.photoCount;
+}
+
 
 
  renderPowers() {
