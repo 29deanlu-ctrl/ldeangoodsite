@@ -8,7 +8,6 @@ const firebaseConfig = {
  appId: "1:611226135294:web:e4562b5e71e99f2fb713af"
 };
 
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -21,7 +20,6 @@ function setupTabs() {
  nav.style.justifyContent = "center";
  nav.style.marginBottom = "20px";
 
-
  ["🎮 Clicker", "🃏 Casino"].forEach((txt, i) => {
    const btn = document.createElement("button");
    btn.textContent = txt;
@@ -31,10 +29,8 @@ function setupTabs() {
    nav.appendChild(btn);
  });
 
-
  document.querySelector(".page-container").prepend(nav);
 }
-
 
 function switchPage(id) {
  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -59,15 +55,16 @@ class AdvancedClickerGame {
    this.username = getUsername();
    const save = JSON.parse(localStorage.getItem("clickerSave")) || {};
 
-
    this.score = save.score || 0;
    this.perClick = save.perClick || 1;
    this.passivePerSecond = save.passivePerSecond || 0;
    this.multiplierValue = save.multiplierValue || 2;
    this.photoCount = save.photoCount || 1;
 
+   // 🌀 REBIRTH DATA (SAFE ADD)
+   this.rebirths = save.rebirths || 0;
+   this.rebirthMultiplier = save.rebirthMultiplier || 1;
 
-   // Photos array
    this.photos = [
      'images/018879bf-19f7-488c-9b8e-b187de3e160d (1).png',
      'images/1fa2f337-ba2b-402e-973a-4cddd7761054.png',
@@ -91,7 +88,6 @@ class AdvancedClickerGame {
      'images/IMG_8714.jpeg'
    ];
 
-
    this.photoUpgrades = this.photos.map((p, i) => ({
      index: i,
      photo: p,
@@ -100,16 +96,13 @@ class AdvancedClickerGame {
      passiveValue: Math.ceil(i * 0.3)
    }));
 
-
    this.powerUpgrades = [
      { id: "click", name: "+10 Per Click", base: 500, owned: save.power?.click || 0 },
      { id: "auto", name: "Auto Clicker", base: 2000, owned: save.power?.auto || 0 },
      { id: "multi", name: "Multiplier Boost", base: 5000, owned: save.power?.multi || 0 }
    ];
 
-
    document.getElementById("clickerImg").src = save.currentPhoto || this.photoUpgrades[0].photo;
-
 
    this.bindClick();
    this.renderPhotos();
@@ -117,72 +110,63 @@ class AdvancedClickerGame {
    this.loop();
    this.updateUI();
    this.fetchLeaderboard();
-
+   this.fetchRebirthLeaderboard();
 
    setInterval(() => this.submitScore(), 10000);
  }
 
-
  bindClick() {
    document.getElementById("clickerImg").onclick = () => {
-     this.score += this.perClick * this.multiplierValue;
+     this.score += this.perClick * this.multiplierValue * this.rebirthMultiplier;
      this.updateUI();
      this.save();
    };
  }
 
-
  loop() {
    setInterval(() => {
      if (this.passivePerSecond > 0) {
-       this.score += this.passivePerSecond * this.multiplierValue;
+       this.score += this.passivePerSecond * this.multiplierValue * this.rebirthMultiplier;
        this.updateUI();
        this.save();
      }
    }, 1000);
  }
 
-
  renderPhotos() {
-  const c = document.getElementById("photoUpgrades");
-  c.innerHTML = "";
+   const c = document.getElementById("photoUpgrades");
+   c.innerHTML = "";
 
-  this.photoUpgrades.forEach(u => {
-    const b = document.createElement("button");
-    b.className = "photo-btn";
+   this.photoUpgrades.forEach(u => {
+     const b = document.createElement("button");
+     b.className = "photo-btn";
+     if (u.purchased) b.classList.add("purchased");
+     b.disabled = u.purchased || this.score < u.cost;
 
-    if (u.purchased) b.classList.add("purchased");
+     b.innerHTML = `
+       <div class="photo-inner">
+         <img src="${u.photo}">
+       </div>
+       <div class="photo-cost">${u.cost}</div>
+     `;
 
-    // ✅ disable if bought OR can't afford
-    b.disabled = u.purchased || this.score < u.cost;
+     b.onclick = () => {
+       if (!u.purchased && this.score >= u.cost) {
+         this.score -= u.cost;
+         u.purchased = true;
+         this.passivePerSecond += u.passiveValue;
+         document.getElementById("clickerImg").src = u.photo;
+         this.photoCount++;
+         this.updateUI();
+         this.save();
+       }
+     };
 
-    b.innerHTML = `
-      <div class="photo-inner">
-        <img src="${u.photo}" alt="Photo ${u.index + 1}">
-      </div>
-      <div class="photo-cost">${u.cost}</div>
-    `;
+     c.appendChild(b);
+   });
 
-    b.onclick = () => {
-      if (!u.purchased && this.score >= u.cost) {
-        this.score -= u.cost;
-        u.purchased = true;
-        this.passivePerSecond += u.passiveValue;
-        document.getElementById("clickerImg").src = u.photo;
-        this.photoCount++;
-
-        this.updateUI();
-        this.save();
-      }
-    };
-
-    c.appendChild(b);
-  });
-
-  document.getElementById("photoCount").textContent = this.photoCount;
-}
-
-
+   document.getElementById("photoCount").textContent = this.photoCount;
+ }
 
  renderPowers() {
    const c = document.getElementById("powerUpgrades");
@@ -214,16 +198,35 @@ class AdvancedClickerGame {
    });
  }
 
+ attemptRebirth() {
+   const COST = 1_000_000_000_000;
+   if (this.score < COST) {
+     alert("You need 1 trillion clicks to rebirth.");
+     return;
+   }
+
+   if (!confirm("Rebirth resets progress for a permanent +20% boost. Continue?")) return;
+
+   this.rebirths++;
+   this.rebirthMultiplier = 1 + this.rebirths * 0.2;
+
+   this.score = 0;
+   this.perClick = 1;
+   this.passivePerSecond = 0;
+   this.multiplierValue = 2;
+   this.photoCount = 1;
+
+   this.photoUpgrades.forEach((p, i) => p.purchased = i === 0);
+   this.powerUpgrades.forEach(p => p.owned = 0);
+
+   this.save();
+   this.updateUI();
+ }
 
  updateUI() {
    document.getElementById("clickerScore").textContent = Math.floor(this.score);
-   document.getElementById("clickerPerClick").textContent = this.perClick;
-   document.getElementById("clickerPassive").textContent = this.passivePerSecond;
-   document.getElementById("clickerMultiplier").textContent = "x" + this.multiplierValue;
    document.getElementById("casinoScore").textContent = Math.floor(this.score);
-   this.renderPowers();
  }
-
 
  save() {
    localStorage.setItem("clickerSave", JSON.stringify({
@@ -234,10 +237,11 @@ class AdvancedClickerGame {
      photoCount: this.photoCount,
      currentPhoto: document.getElementById("clickerImg").src,
      photoUpgrades: this.photoUpgrades.map(p => ({ purchased: p.purchased })),
-     power: Object.fromEntries(this.powerUpgrades.map(p => [p.id, p.owned]))
+     power: Object.fromEntries(this.powerUpgrades.map(p => [p.id, p.owned])),
+     rebirths: this.rebirths,
+     rebirthMultiplier: this.rebirthMultiplier
    }));
  }
-
 
  async fetchLeaderboard() {
    const lb = document.getElementById("leaderboard");
@@ -250,201 +254,224 @@ class AdvancedClickerGame {
    });
  }
 
+ async fetchRebirthLeaderboard() {
+   const lb = document.getElementById("rebirthLeaderboard");
+   if (!lb) return;
+   lb.innerHTML = "";
+   const snap = await db.collection("leaderboard").orderBy("rebirths", "desc").limit(5).get();
+   snap.forEach(d => {
+     const data = d.data();
+     lb.innerHTML += `<li>${data.name}: ${data.rebirths || 0} rebirths</li>`;
+   });
+ }
 
  submitScore() {
    db.collection("leaderboard").doc(this.username).set({
      name: this.username,
      score: this.score,
+     rebirths: this.rebirths,
      timestamp: firebase.firestore.FieldValue.serverTimestamp()
    }, { merge: true });
  }
 }
 
 
+// ==================== CASINOS (UNCHANGED) ====================
 // ==================== BLACKJACK ====================
 class BlackjackCasino {
- constructor(game) {
-   this.game = game;
-   this.inRound = false;
+  constructor(game) {
+    this.game = game;
+    this.inRound = false;
 
+    // Use existing HTML buttons
+    this.hitBtn = document.getElementById("casinoHit");
+    this.standBtn = document.getElementById("casinoStand");
+    this.startBtn = document.getElementById("casinoPlayBtn");
+    this.betInput = document.getElementById("casinoBet");
+    this.resultDisplay = document.getElementById("casinoResult");
 
-   // Use existing HTML buttons
-   this.hitBtn = document.getElementById("casinoHit");
-   this.standBtn = document.getElementById("casinoStand");
+    this.startBtn.onclick = () => this.startRound();
+    this.hitBtn.onclick = () => this.hit();
+    this.standBtn.onclick = () => this.stand();
 
+    this.updateButtons(false);
+  }
 
-   this.startBtn = document.getElementById("casinoPlayBtn");
-   this.betInput = document.getElementById("casinoBet");
-   this.resultDisplay = document.getElementById("casinoResult");
+  updateButtons(active) {
+    this.hitBtn.disabled = !active;
+    this.standBtn.disabled = !active;
+  }
 
+  drawCard() {
+    return Math.floor(Math.random() * 10) + 2;
+  }
 
-   this.startBtn.onclick = () => this.startRound();
-   this.hitBtn.onclick = () => this.hit();
-   this.standBtn.onclick = () => this.stand();
+  startRound() {
+    const bet = parseInt(this.betInput.value);
+    if (bet <= 0 || bet > this.game.score) {
+      this.resultDisplay.textContent = "Invalid bet!";
+      return;
+    }
 
+    this.inRound = true;
+    this.bet = bet;
+    this.game.score -= bet;
 
-   this.updateButtons(false);
- }
+    this.playerCards = [this.drawCard(), this.drawCard()];
+    this.dealerCards = [this.drawCard(), this.drawCard()];
 
+    this.updateResult();
+    this.updateButtons(true);
+    this.game.updateUI();
+  }
 
- updateButtons(active) {
-   this.hitBtn.disabled = !active;
-   this.standBtn.disabled = !active;
- }
+  getTotal(cards) {
+    return cards.reduce((a, b) => a + b, 0);
+  }
 
+  updateResult() {
+    this.resultDisplay.textContent =
+      `You: ${this.playerCards.join(" + ")} = ${this.getTotal(this.playerCards)} | ` +
+      `Dealer: ${this.dealerCards[0]} + ?`;
+  }
 
- drawCard() { return Math.floor(Math.random() * 10) + 2; }
+  hit() {
+    if (!this.inRound) return;
 
+    this.playerCards.push(this.drawCard());
+    const total = this.getTotal(this.playerCards);
 
- startRound() {
-   const bet = parseInt(this.betInput.value);
-   if (bet <= 0 || bet > this.game.score) {
-     this.resultDisplay.textContent = "Invalid bet!";
-     return;
-   }
-   this.inRound = true;
-   this.bet = bet;
-   this.game.score -= bet;
-   this.playerCards = [this.drawCard(), this.drawCard()];
-   this.dealerCards = [this.drawCard(), this.drawCard()];
-   this.updateResult();
-   this.updateButtons(true);
-   this.game.updateUI();
- }
+    if (total > 21) {
+      this.resultDisplay.textContent =
+        `💥 Bust! You: ${this.playerCards.join(" + ")} = ${total}`;
+      this.endRound();
+    } else {
+      this.updateResult();
+    }
+  }
 
+  stand() {
+    if (!this.inRound) return;
 
- getTotal(cards) { return cards.reduce((a, b) => a + b, 0); }
+    while (this.getTotal(this.dealerCards) < 17) {
+      this.dealerCards.push(this.drawCard());
+    }
 
+    const playerTotal = this.getTotal(this.playerCards);
+    const dealerTotal = this.getTotal(this.dealerCards);
 
- updateResult() {
-   this.resultDisplay.textContent = `You: ${this.playerCards.join(" + ")} = ${this.getTotal(this.playerCards)} | Dealer: ${this.dealerCards[0]} + ?`;
- }
+    let message =
+      `You: ${this.playerCards.join(" + ")} = ${playerTotal} | ` +
+      `Dealer: ${this.dealerCards.join(" + ")} = ${dealerTotal} — `;
 
+    if (dealerTotal > 21 || (playerTotal <= 21 && playerTotal > dealerTotal)) {
+      this.game.score += this.bet * 2;
+      message += `🎉 You win ${this.bet * 2}!`;
+    } else if (playerTotal === dealerTotal) {
+      this.game.score += this.bet;
+      message += "Tie — Bet returned!";
+    } else {
+      message += "❌ Dealer wins.";
+    }
 
- hit() {
-   if (!this.inRound) return;
-   this.playerCards.push(this.drawCard());
-   const total = this.getTotal(this.playerCards);
-   if (total > 21) {
-     this.resultDisplay.textContent = `💥 Bust! You: ${this.playerCards.join(" + ")} = ${total}`;
-     this.endRound();
-   } else this.updateResult();
- }
+    this.resultDisplay.textContent = message;
+    this.endRound();
+    this.game.updateUI();
+  }
 
-
- stand() {
-   if (!this.inRound) return;
-   while (this.getTotal(this.dealerCards) < 17) this.dealerCards.push(this.drawCard());
-   const playerTotal = this.getTotal(this.playerCards);
-   const dealerTotal = this.getTotal(this.dealerCards);
-   let message = `You: ${this.playerCards.join(" + ")} = ${playerTotal} | Dealer: ${this.dealerCards.join(" + ")} = ${dealerTotal} — `;
-   if (dealerTotal > 21 || (playerTotal <= 21 && playerTotal > dealerTotal)) {
-     this.game.score += this.bet * 2;
-     message += `🎉 You win ${this.bet * 2}!`;
-   } else if (playerTotal === dealerTotal) {
-     this.game.score += this.bet;
-     message += "Tie — Bet returned!";
-   } else {
-     message += "❌ Dealer wins.";
-   }
-   this.resultDisplay.textContent = message;
-   this.endRound();
-   this.game.updateUI();
- }
-
-
- endRound() {
-   this.inRound = false;
-   this.updateButtons(false);
-   this.game.save();
- }
+  endRound() {
+    this.inRound = false;
+    this.updateButtons(false);
+    this.game.save();
+  }
 }
 
 
 // ==================== MYSTERY BOX ====================
 class MysteryBoxCasino {
- constructor(game) {
-   this.game = game;
-   const btn = document.getElementById("openMystery");
-   const costInput = document.getElementById("mysteryCost");
-   const display = document.getElementById("mysteryResult");
+  constructor(game) {
+    this.game = game;
 
-   btn.onclick = () => {
-     const cost = parseInt(costInput.value);
-     if (isNaN(cost) || cost <= 0 || cost > this.game.score) {
-       display.textContent = "Not enough clicks!";
-       return;
-     }
+    const btn = document.getElementById("openMystery");
+    const costInput = document.getElementById("mysteryCost");
+    const display = document.getElementById("mysteryResult");
 
-     this.game.score -= cost;
+    btn.onclick = () => {
+      const cost = parseInt(costInput.value);
+      if (isNaN(cost) || cost <= 0 || cost > this.game.score) {
+        display.textContent = "Not enough clicks!";
+        return;
+      }
 
-     // 🎯 1-in-6 win rate
-     const roll = Math.floor(Math.random() * 6); // 0–5
-     let reward = 0;
+      this.game.score -= cost;
 
-     if (roll === 0) {
-       // Win (exactly 1 out of 6)
-       const tier = Math.random();
-       if (tier < 0.6) reward = Math.floor(cost * 2);
-       else if (tier < 0.9) reward = Math.floor(cost * 4);
-       else reward = Math.floor(cost * 10);
-     }
+      // 🎯 1-in-6 win rate
+      const roll = Math.floor(Math.random() * 6);
+      let reward = 0;
 
-     this.game.score += reward;
+      if (roll === 0) {
+        const tier = Math.random();
+        if (tier < 0.6) reward = Math.floor(cost * 2);
+        else if (tier < 0.9) reward = Math.floor(cost * 4);
+        else reward = Math.floor(cost * 10);
+      }
 
-     display.textContent = reward > 0
-       ? `🎉 JACKPOT! You won ${reward} clicks!`
-       : `❌ Empty box… better luck next time.`;
+      this.game.score += reward;
 
-     this.game.updateUI();
-     this.game.save();
-   };
- }
+      display.textContent = reward > 0
+        ? `🎉 JACKPOT! You won ${reward} clicks!`
+        : `❌ Empty box… better luck next time.`;
+
+      this.game.updateUI();
+      this.game.save();
+    };
+  }
 }
-
 
 
 // ==================== ROULETTE ====================
 class RouletteCasino {
- constructor(game) {
-   this.game = game;
-   const btn = document.getElementById("spinRoulette");
-   const betInput = document.getElementById("rouletteBet");
-   const pickInput = document.getElementById("roulettePick");
-   const display = document.getElementById("rouletteResult");
+  constructor(game) {
+    this.game = game;
 
+    const btn = document.getElementById("spinRoulette");
+    const betInput = document.getElementById("rouletteBet");
+    const pickInput = document.getElementById("roulettePick");
+    const display = document.getElementById("rouletteResult");
 
-   btn.onclick = () => {
-     const bet = parseInt(betInput.value);
-     const pick = pickInput.value;
-     if (isNaN(bet) || bet <= 0 || bet > this.game.score) {
-       display.textContent = "Invalid bet!";
-       return;
-     }
+    btn.onclick = () => {
+      const bet = parseInt(betInput.value);
+      const pick = pickInput.value;
 
+      if (isNaN(bet) || bet <= 0 || bet > this.game.score) {
+        display.textContent = "Invalid bet!";
+        return;
+      }
 
-     this.game.score -= bet;
-     const spin = Math.random();
-     let result = "";
-     let multiplier = 0;
+      this.game.score -= bet;
 
+      const spin = Math.random();
+      let result = "";
+      let multiplier = 0;
 
-     if (spin < 0.48) result = "red";
-     else if (spin < 0.96) result = "black";
-     else result = "green";
+      if (spin < 0.48) result = "red";
+      else if (spin < 0.96) result = "black";
+      else result = "green";
 
+      if (result === pick) {
+        multiplier = result === "green" ? 14 : 2;
+        this.game.score += bet * multiplier;
+        display.textContent =
+          `🎉 ${result.toUpperCase()}! You won ${bet * multiplier} clicks!`;
+      } else {
+        display.textContent =
+          `❌ ${result.toUpperCase()}! You lost ${bet} clicks.`;
+      }
 
-     if (result === pick) {
-       multiplier = result === "green" ? 14 : 2;
-       this.game.score += bet * multiplier;
-       display.textContent = `🎉 ${result.toUpperCase()}! You won ${bet * multiplier} clicks!`;
-     } else {
-       display.textContent = `❌ ${result.toUpperCase()}! You lost ${bet} clicks.`;
-     }
-     this.game.updateUI();
-     this.game.save();
-   };
- }
+      this.game.updateUI();
+      this.game.save();
+    };
+  }
 }
 
 
@@ -456,27 +483,18 @@ window.onload = () => {
  new MysteryBoxCasino(game);
  new RouletteCasino(game);
 
+ document.getElementById("rebirthBtn").onclick = () => game.attemptRebirth();
 
-let codeInput = "";
-window.addEventListener("keydown", (e) => {
-  codeInput += e.key;
-
-  if (codeInput.endsWith("787419")) {
-    const oldScore = game.score;
-    game.score *= 2;
-
-    alert(`💰 SECRET CODE! Your clicks doubled: ${oldScore} → ${game.score}`);
-
-    game.updateUI();
-    game.save();
-    codeInput = "";
-  }
-
-  if (codeInput.length > 10) {
-    codeInput = codeInput.slice(-10);
-  }
-});
+ let codeInput = "";
+ window.addEventListener("keydown", (e) => {
+   codeInput += e.key;
+   if (codeInput.endsWith("787419")) {
+     game.score *= 2;
+     alert("💰 SECRET CODE! Your clicks doubled!");
+     game.updateUI();
+     game.save();
+     codeInput = "";
+   }
+   if (codeInput.length > 10) codeInput = codeInput.slice(-10);
+ });
 };
-
-
-
