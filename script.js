@@ -476,6 +476,7 @@ window.addEventListener("keydown", (e) => {
     codeInput = codeInput.slice(-10);
   }
 });
+};
 
 
 
