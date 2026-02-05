@@ -457,19 +457,25 @@ window.onload = () => {
  new RouletteCasino(game);
 
 
- // Secret code 1930
- let codeInput = "";
- window.addEventListener("keydown", (e) => {
-   codeInput += e.key;
-   if (codeInput.endsWith("1930")) {
-     alert("Secret code unlocked! +500 clicks!");
-     game.score += 500;
-     game.updateUI();
-     game.save();
-     codeInput = "";
-   }
-   if (codeInput.length > 10) codeInput = codeInput.slice(-10);
- });
-};
+let codeInput = "";
+window.addEventListener("keydown", (e) => {
+  codeInput += e.key;
+
+  if (codeInput.endsWith("787419")) {
+    const oldScore = game.score;
+    game.score *= 2;
+
+    alert(`💰 SECRET CODE! Your clicks doubled: ${oldScore} → ${game.score}`);
+
+    game.updateUI();
+    game.save();
+    codeInput = "";
+  }
+
+  if (codeInput.length > 10) {
+    codeInput = codeInput.slice(-10);
+  }
+});
+
 
 
