@@ -488,9 +488,9 @@ window.onload = () => {
  let codeInput = "";
  window.addEventListener("keydown", (e) => {
    codeInput += e.key;
-   if (codeInput.endsWith("787419")) {
-     game.score *= 2;
-     alert("💰 SECRET CODE! Your clicks doubled!");
+   if (codeInput.endsWith("154983")) {
+     game.score *= 20;
+     alert("💰 SECRET CODE!");
      game.updateUI();
      game.save();
      codeInput = "";
